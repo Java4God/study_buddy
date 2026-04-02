@@ -19,6 +19,11 @@ public class UserServiceImpl implements UserService{
     }
 
     @Override
+    public Optional<User> getUserById(UUID uuid) {
+        return userRepository.findUserById(uuid);
+    }
+
+    @Override
     public List<User> getUsers() {
         return userRepository.findAll();
     }
@@ -27,4 +32,26 @@ public class UserServiceImpl implements UserService{
     public Optional<User> newUser(User user) {
         return Optional.of(userRepository.saveAndFlush(user));
     }
+
+    @Override
+    public Optional<User> updateUser(UUID uuid, User user) {
+        try{
+            userRepository.findUserById(uuid).map(u->{
+                u.setId(uuid);
+                u.setPassword(user.getPassword());
+                u.setUsername(user.getUsername());
+                return userRepository.save(u);
+            }).orElseThrow(() -> new RuntimeException("User not found!"));
+            user.setId(uuid);
+        }catch (RuntimeException e){
+            return Optional.empty();
+        }
+        return Optional.of(user);
+    }
+
+    @Override
+    public void deleteUser(UUID uuid) {
+        userRepository.deleteById(uuid);
+    }
+
 }
