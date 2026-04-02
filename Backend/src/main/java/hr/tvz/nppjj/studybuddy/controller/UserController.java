@@ -7,10 +7,9 @@ import lombok.NoArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("users")
@@ -22,5 +21,15 @@ public class UserController {
     ResponseEntity<User> getUserByEmail(@PathVariable String email){
         return userService.getUserByEmail(email).map(user -> ResponseEntity.status(HttpStatus.FOUND).body(user))
                 .orElseGet(() -> ResponseEntity.notFound().build());
+    }
+
+    @GetMapping
+    List<User> getUsers(){
+        return userService.getUsers();
+    }
+
+    @PostMapping("register")
+    ResponseEntity<User> newUser(@RequestBody User user){
+        return ResponseEntity.ok().build();
     }
 }
