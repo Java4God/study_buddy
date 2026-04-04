@@ -6,6 +6,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/app/components/card";
+import Input from "@/app/components/input";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -40,8 +41,8 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center dark:from-gray-900 dark:via-gray-900 dark:to-gray-800 p-4">
-      <Card className="w-full max-w-md">
+    <div className="min-h-screen flex w-full items-center justify-center dark:from-gray-900 dark:via-gray-900 dark:to-gray-800 p-4">
+      <Card className="w-full max-w-md border rounded-xl pt-6">
         <CardHeader className="text-center">
           <div className="flex justify-center mb-4">
             <div className="p-3 bg-indigo-100 dark:bg-indigo-900 rounded-2xl">
@@ -55,37 +56,26 @@ export default function LoginPage() {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <label htmlFor="email">Email</label>
-              <input
-                id="email"
-                type="email"
-                placeholder="you@example.com"
-                value={email}
-                onChange={(e) => {
-                  setEmail(e.target.value);
-                  setError("");
-                }}
-              />
-            </div>
-            <div className="space-y-2">
-              <label htmlFor="password">Password</label>
-              <input
-                id="password"
-                type="password"
-                placeholder="••••••••"
-                value={password}
-                onChange={(e) => {
-                  setPassword(e.target.value);
-                  setError("");
-                }}
-              />
-              {error && (
-                <p className="text-sm text-red-500 flex items-center gap-1">
-                  <span>⚠</span> {error}
-                </p>
-              )}
-            </div>
+            <Input
+              label={"Email"}
+              setValue={(value) => {
+                setEmail(value);
+              }}
+              placeholder="name.surname@mail.com"
+              value={email}
+              type="email"
+            />
+            <Input
+              label={"Password"}
+              setValue={(value) => {
+                setPassword(value);
+                setError("");
+              }}
+              placeholder="••••••••••"
+              value={password}
+              type="password"
+              error={error}
+            />
             <button type="submit" className="w-full" disabled={loading}>
               {loading ? "Signing in..." : "Sign In"}
             </button>

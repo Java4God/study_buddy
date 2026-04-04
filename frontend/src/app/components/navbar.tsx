@@ -1,3 +1,4 @@
+"use client";
 //import { Link, useLocation } from "react-router";
 //import { useAuth } from "../contexts/AuthContext";
 //import { Button } from "./ui/button";
@@ -20,6 +21,7 @@ import {
 //import { useTheme } from "next-themes";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 const navItems = [
   { path: "/dashboard", label: "Dashboard" },
@@ -35,6 +37,12 @@ const Navbar = () => {
   //const location = useLocation();
   //const { user, logout } = useAuth();
   //const { theme, setTheme } = useTheme();
+  const router = useRouter();
+
+  const logout = () => {
+    //Logout
+    router.push("/login");
+  };
 
   return (
     <aside className="w-64 bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 flex flex-col h-screen sticky top-0">
@@ -106,12 +114,12 @@ const Navbar = () => {
             </p>
           </div>
         </div>
-        <button
-          className="w-full justify-start text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20"
-          //onClick={logout}
+        <div
+          className="cursor-pointer w-full justify-start text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20"
+          onClick={logout}
         >
           Logout
-        </button>
+        </div>
       </div>
     </aside>
   );

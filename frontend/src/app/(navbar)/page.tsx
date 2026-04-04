@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
  */
 import Link from "next/link";
-import { Card, CardContent, CardHeader, CardTitle } from "./components/card";
+import { Card, CardContent, CardHeader, CardTitle } from "../components/card";
 
 export default function DashboardPage() {
   // Mock data
