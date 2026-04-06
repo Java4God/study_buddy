@@ -70,7 +70,7 @@ export default function Input({
         className={className ?? defaultInputStyles(!!error)}
       />
 
-      {error && (
+      {error ? (
         <p
           id={`${inputId}-error`}
           role="alert"
@@ -78,7 +78,7 @@ export default function Input({
         >
           {error}
         </p>
-      )}
+      ) : null}
     </div>
   );
 }

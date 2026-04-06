@@ -1,4 +1,3 @@
-/*
 import {
   Timer,
   Users,
@@ -10,9 +9,14 @@ import {
   Calendar,
   Sparkles,
 } from "lucide-react";
- */
+
 import Link from "next/link";
-import { Card, CardContent, CardHeader, CardTitle } from "../components/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "../../components/card";
 
 export default function DashboardPage() {
   // Mock data
@@ -39,8 +43,6 @@ export default function DashboardPage() {
     { day: "Sun", hours: 3 },
   ];
 
-  const maxHours = Math.max(...weeklyProgress.map((d) => d.hours));
-
   return (
     <div className="space-y-6 py-8 px-20">
       <div>
@@ -61,7 +63,7 @@ export default function DashboardPage() {
                 <p className="text-3xl mt-1">{todayStats.pomodoroSessions}</p>
               </div>
               <div className="p-3 bg-red-100 dark:bg-red-900/30 rounded-xl">
-                {/*<Timer className="size-6 text-red-600 dark:text-red-400" />*/}
+                <Timer className="size-6 text-red-600 dark:text-red-400" />
               </div>
             </div>
           </CardContent>
@@ -77,7 +79,7 @@ export default function DashboardPage() {
                 <p className="text-3xl mt-1">{todayStats.studyHours}h</p>
               </div>
               <div className="p-3 bg-blue-100 dark:bg-blue-900/30 rounded-xl">
-                {/*<Clock className="size-6 text-blue-600 dark:text-blue-400" />*/}
+                <Clock className="size-6 text-blue-600 dark:text-blue-400" />
               </div>
             </div>
           </CardContent>
@@ -93,7 +95,7 @@ export default function DashboardPage() {
                 <p className="text-3xl mt-1">{todayStats.flashcardsReviewed}</p>
               </div>
               <div className="p-3 bg-purple-100 dark:bg-purple-900/30 rounded-xl">
-                {/*<Layers className="size-6 text-purple-600 dark:text-purple-400" />*/}
+                <Layers className="size-6 text-purple-600 dark:text-purple-400" />
               </div>
             </div>
           </CardContent>
@@ -109,7 +111,7 @@ export default function DashboardPage() {
                 <p className="text-3xl mt-1">{todayStats.streak}</p>
               </div>
               <div className="p-3 bg-orange-100 dark:bg-orange-900/30 rounded-xl">
-                {/*<Flame className="size-6 text-orange-600 dark:text-orange-400" />*/}
+                <Flame className="size-6 text-orange-600 dark:text-orange-400" />
               </div>
             </div>
           </CardContent>
@@ -123,25 +125,25 @@ export default function DashboardPage() {
         <CardContent className="flex flex-wrap gap-3 flow-row">
           <Link href="/timer">
             <button className="gap-2 border-1 rounded-md p-2">
-              {/*<Timer className="size-4" />*/}
+              <Timer className="size-4" />
               Start Timer
             </button>
           </Link>
           <Link href="/ai-assistant">
             <button className="gap-2 border-1 rounded-md p-2">
-              {/*<Sparkles className="size-4" />*/}
+              <Sparkles className="size-4" />
               Ask AI Assistant
             </button>
           </Link>
           <Link href="/rooms">
             <button className="gap-2 border-1 rounded-md p-2">
-              {/*<Users className="size-4" />*/}
+              <Users className="size-4" />
               Join Study Room
             </button>
           </Link>
           <Link href="/flashcards">
             <button className="gap-2 border-1 rounded-md p-2">
-              {/*<Layers className="size-4" />*/}
+              <Layers className="size-4" />
               Review Flashcards
             </button>
           </Link>
@@ -149,11 +151,10 @@ export default function DashboardPage() {
       </Card>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Weekly Progress */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              {/*<TrendingUp className="size-5" />*/}
+              <TrendingUp className="size-5" />
               Weekly Progress
             </CardTitle>
           </CardHeader>
@@ -173,12 +174,10 @@ export default function DashboardPage() {
             </div>
           </CardContent>
         </Card>
-
-        {/* Upcoming Exams */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              {/*<Calendar className="size-5" />*/}
+              <Calendar className="size-5" />
               Upcoming Exams
             </CardTitle>
           </CardHeader>
@@ -200,7 +199,7 @@ export default function DashboardPage() {
                   </div>
                   <div className="text-right">
                     <div className="flex items-center gap-1 text-sm">
-                      {/*<Target className="size-4" />*/}
+                      <Target className="size-4" />
                       <span className="font-medium">{exam.daysLeft} days</span>
                     </div>
                   </div>

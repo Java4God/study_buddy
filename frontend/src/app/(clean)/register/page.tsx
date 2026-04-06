@@ -1,0 +1,204 @@
+"use client";
+import { useState } from "react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "../../components/card";
+import { useRouter } from "next/navigation";
+import Input from "@/app/components/input";
+import Link from "next/link";
+import axios from "axios";
+import {
+  validateEmail,
+  validatePassword,
+  validateUsername,
+} from "@/app/functions";
+import { BookOpen } from "lucide-react";
+
+function getPasswordStrength(password: string): {
+  label: string;
+  color: string;
+  bgColor: string;
+  width: string;
+} {
+  if (password.length === 0)
+    return { label: "", color: "", bgColor: "", width: "0%" };
+
+  let score = 0;
+  if (password.length >= 8) score++;
+  if (password.length >= 12) score++;
+  if (/[A-Z]/.test(password)) score++;
+  if (/[0-9]/.test(password)) score++;
+  if (/[^A-Za-z0-9]/.test(password)) score++;
+
+  if (score <= 2)
+    return {
+      label: "Weak",
+      color: "text-red-500",
+      bgColor: "bg-red-500",
+      width: "33%",
+    };
+  if (score <= 3)
+    return {
+      label: "Medium",
+      color: "text-yellow-500",
+      bgColor: "bg-yellow-500",
+      width: "66%",
+    };
+  return {
+    label: "Strong",
+    color: "text-green-500",
+    bgColor: "bg-green-500",
+    width: "100%",
+  };
+}
+
+const RegisterPage = () => {
+  const [username, setUsername] = useState("");
+  const [usernameError, setUsernameError] = useState<string | undefined>("");
+  const [email, setEmail] = useState("");
+  const [emailError, setEmailError] = useState<string | undefined>("");
+  const [password, setPassword] = useState("");
+  const [passwordError, setPasswordError] = useState<string | undefined>("");
+  const [repeatPassword, setRepeatPassword] = useState("");
+  const [repeatPasswordError, setRepeatPasswordError] = useState<
+    string | undefined
+  >("");
+  const [loading, setLoading] = useState(false);
+  const router = useRouter();
+
+  console.log("o", username);
+
+  const strength = getPasswordStrength(password);
+
+  const checkInputErrors = () => {
+    let isWrong = false;
+    const emailError = validateEmail(email);
+    const passwordError = validatePassword(password);
+    const usernameError = validateUsername(username);
+    setUsernameError(usernameError);
+    setEmailError(emailError);
+    setPasswordError(passwordError);
+    if (!passwordError && password !== repeatPassword) {
+      setRepeatPasswordError("Password's don't match");
+      isWrong = true;
+    } else {
+      setRepeatPasswordError(undefined);
+    }
+    if (emailError || passwordError || usernameError || password !== password) {
+      isWrong = true;
+    }
+    return isWrong;
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    const isWrong = checkInputErrors();
+    if (isWrong) {
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      await axios.post("/api/auth/register", { username, email, password });
+      router.push("/dashboard");
+    } catch (error) {
+      console.error("Registration failed:", error);
+    } finally {
+      setLoading(false);
+      //delete later - testing
+      router.push("/dashboard");
+    }
+  };
+
+  return (
+    <div className="min-h-screen w-full flex items-center justify-center bg-gradient-to-br from-indigo-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-900 dark:to-gray-800 p-4">
+      <Card className="w-full max-w-md border rounded-xl pt-6">
+        <CardHeader className="text-center">
+          <div className="flex justify-center mb-4">
+            <div className="p-3 bg-indigo-100 dark:bg-indigo-900 rounded-2xl">
+              <BookOpen className="size-8 text-indigo-600 dark:text-indigo-400" />
+            </div>
+          </div>
+          <CardTitle className="text-2xl">Create your account</CardTitle>
+          <CardDescription>
+            Join StudyBuddy and boost your productivity
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <Input
+              label="Name"
+              placeholder="Alex Johnson"
+              type="text"
+              value={username}
+              setValue={(value) => setUsername(value)}
+              required
+              error={usernameError}
+            />
+            <Input
+              label="Email"
+              placeholder="alex.johnson@mail.com"
+              type="email"
+              value={email}
+              setValue={(value) => setEmail(value)}
+              required
+              error={emailError}
+            />
+            <Input
+              label="Password"
+              placeholder="••••••••"
+              type="password"
+              value={password}
+              setValue={(value) => setPassword(value)}
+              required
+              error={passwordError}
+            />
+            {password.length > 0 && (
+              <div className="space-y-1.5 pt-1">
+                <div className="h-1.5 w-full bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                  <div
+                    className={`h-full rounded-full transition-all duration-300 ${strength.bgColor}`}
+                    style={{ width: strength.width }}
+                  />
+                </div>
+                <p className={`text-xs ${strength.color}`}>
+                  Password strength:{" "}
+                  <span className="font-medium">{strength.label}</span>
+                </p>
+              </div>
+            )}
+            <Input
+              label="Repeat password"
+              placeholder="••••••••"
+              type="password"
+              value={repeatPassword}
+              setValue={(value) => setRepeatPassword(value)}
+              required
+              error={repeatPasswordError}
+            />
+            <button type="submit" className="w-full" disabled={loading}>
+              {loading ? "Creating account..." : "Create Account"}
+            </button>
+          </form>
+          <div className="mt-4 text-center text-sm text-gray-600 dark:text-gray-400">
+            Already have an account?{" "}
+            <Link
+              href="/login"
+              className="text-indigo-600 dark:text-indigo-400 hover:underline"
+            >
+              Sign in
+            </Link>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+};
+
+export default RegisterPage;

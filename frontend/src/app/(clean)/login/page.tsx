@@ -7,6 +7,8 @@ import {
   CardTitle,
 } from "@/app/components/card";
 import Input from "@/app/components/input";
+import axios from "axios";
+import { BookOpen } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -29,14 +31,18 @@ export default function LoginPage() {
 
     setLoading(true);
     try {
-      //await login(email, password);
-      console.log("provjera credentialsa");
-      router.push("/");
+      await axios.post("/api/auth/login", {
+        email,
+        password,
+      });
+      router.push("/dashboard");
     } catch (error) {
       console.error("Login failed:", error);
       setError("Invalid email or password");
     } finally {
       setLoading(false);
+      //delete later - testing
+      router.push("/dashboard");
     }
   };
 
@@ -46,7 +52,7 @@ export default function LoginPage() {
         <CardHeader className="text-center">
           <div className="flex justify-center mb-4">
             <div className="p-3 bg-indigo-100 dark:bg-indigo-900 rounded-2xl">
-              {/*<BookOpen className="size-8 text-indigo-600 dark:text-indigo-400" />*/}
+              <BookOpen className="size-8 text-indigo-600 dark:text-indigo-400" />
             </div>
           </div>
           <CardTitle className="text-2xl">Welcome to StudyBuddy</CardTitle>
