@@ -16,7 +16,7 @@ TVZ · Akademska godina 2025./2026.
 - JPA/Hibernate + PostgreSQL
 - WebSocket + STOMP + SockJS
 - Spring Mail
-- Thymeleaf / React
+- Next.js
 - Maven
 
 ---
