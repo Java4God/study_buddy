@@ -84,33 +84,33 @@ export default function DashboardPage() {
         })}
       </div>
 
-      <Card>
+      <Card style={{ paddingBottom: 24, paddingLeft: 24 }}>
         <CardHeader>
           <CardTitle>Quick Actions</CardTitle>
         </CardHeader>
         <CardContent className="flex flex-wrap gap-3 flow-row">
           <Link href="/timer">
-            <button className="gap-2 border-1 rounded-md p-2">
+            <button className="gap-2 border-1 rounded-md p-2 flex items-center ">
               <Timer className="size-4" />
-              Start Timer
+              <p>Start Timer</p>
             </button>
           </Link>
           <Link href="/ai-assistant">
-            <button className="gap-2 border-1 rounded-md p-2">
+            <button className="gap-2 border-1 rounded-md p-2 flex items-center ">
               <Sparkles className="size-4" />
-              Ask AI Assistant
+              <p>Ask AI Assistant</p>
             </button>
           </Link>
           <Link href="/rooms">
-            <button className="gap-2 border-1 rounded-md p-2">
+            <button className="gap-2 border-1 rounded-md p-2 flex items-center ">
               <Users className="size-4" />
-              Join Study Room
+              <p>Join Study Room</p>
             </button>
           </Link>
           <Link href="/flashcards">
-            <button className="gap-2 border-1 rounded-md p-2">
+            <button className="gap-2 border-1 rounded-md p-2 flex items-center ">
               <Layers className="size-4" />
-              Review Flashcards
+              <p>Review Flashcards</p>
             </button>
           </Link>
         </CardContent>

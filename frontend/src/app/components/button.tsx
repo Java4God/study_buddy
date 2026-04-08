@@ -1,6 +1,6 @@
 "use client";
 
-import React, { CSSProperties, MouseEventHandler } from "react";
+import { CSSProperties } from "react";
 
 type ButtonVariant = "normal" | "danger" | "primary" | "secondary";
 

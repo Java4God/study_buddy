@@ -1,10 +1,8 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
 import { Card, CardContent } from "../../components/card";
-//import { Button } from "../../components/button";
 import { Tabs, TabsList, TabsTrigger } from "../../components/tabs";
 import { Play, Pause, RotateCcw, Coffee, Brain } from "lucide-react";
-import Button from "@/app/components/button";
 
 type TimerMode = "focus" | "short" | "long";
 
