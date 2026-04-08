@@ -3,8 +3,6 @@ import {
   Users,
   Layers,
   TrendingUp,
-  Flame,
-  Clock,
   Target,
   Calendar,
   Sparkles,
@@ -21,11 +19,17 @@ import {
 export default function DashboardPage() {
   // Mock data
   const todayStats = {
-    pomodoroSessions: 6,
-    studyHours: 3,
-    flashcardsReviewed: 24,
-    streak: 7,
+    "Pomodoro Sessions": 6,
+    "Study Hours": 3,
+    "Flashcards Reviewed": 24,
+    "Day Streak": 7,
   };
+  const colorPairs = [
+    { bg: "#f4c2c2", text: "#8b4a4a" },
+    { bg: "#add8e6", text: "#2f5d73" },
+    { bg: "#c1e1c1", text: "#3e6b3e" },
+    { bg: "#fff5ba", text: "#8a7a2f" },
+  ];
 
   const upcomingExams = [
     { id: 1, subject: "Calculus II", date: "2026-03-28", daysLeft: 6 },
@@ -53,69 +57,31 @@ export default function DashboardPage() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600 dark:text-gray-400">
-                  Pomodoros Today
-                </p>
-                <p className="text-3xl mt-1">{todayStats.pomodoroSessions}</p>
-              </div>
-              <div className="p-3 bg-red-100 dark:bg-red-900/30 rounded-xl">
-                <Timer className="size-6 text-red-600 dark:text-red-400" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600 dark:text-gray-400">
-                  Study Hours
-                </p>
-                <p className="text-3xl mt-1">{todayStats.studyHours}h</p>
-              </div>
-              <div className="p-3 bg-blue-100 dark:bg-blue-900/30 rounded-xl">
-                <Clock className="size-6 text-blue-600 dark:text-blue-400" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600 dark:text-gray-400">
-                  Flashcards
-                </p>
-                <p className="text-3xl mt-1">{todayStats.flashcardsReviewed}</p>
-              </div>
-              <div className="p-3 bg-purple-100 dark:bg-purple-900/30 rounded-xl">
-                <Layers className="size-6 text-purple-600 dark:text-purple-400" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600 dark:text-gray-400">
-                  Day Streak
-                </p>
-                <p className="text-3xl mt-1">{todayStats.streak}</p>
-              </div>
-              <div className="p-3 bg-orange-100 dark:bg-orange-900/30 rounded-xl">
-                <Flame className="size-6 text-orange-600 dark:text-orange-400" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        {Object.entries(todayStats).map(([key, value], i) => {
+          return (
+            <Card key={key}>
+              <CardContent className="p-6 ">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      {key}
+                    </p>
+                    <p className="text-3xl mt-1">{value}</p>
+                  </div>
+                  <div
+                    className="p-3 rounded-xl"
+                    style={{ backgroundColor: colorPairs[i].bg }}
+                  >
+                    <Timer
+                      className="size-6"
+                      style={{ color: colorPairs[i].text }}
+                    />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          );
+        })}
       </div>
 
       <Card>

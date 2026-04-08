@@ -8,7 +8,6 @@ const API_DOMAIN = process.env.API_DOMAIN ?? "";
 interface RegisterRequestBody {
   email: string;
   password: string;
-  username: string;
 }
 
 interface ExternalApiResponse {
@@ -21,18 +20,20 @@ interface ExternalApiResponse {
 }
 
 export async function POST(req: Request) {
-  const { email, password, username }: RegisterRequestBody = await req.json();
+  const { email, password }: RegisterRequestBody = await req.json();
 
-  if (!email || !password || !username) {
+  console.log("ok");
+  if (!email || !password) {
     return NextResponse.json(
-      { message: "Missing required fields: email, password, username" },
+      { message: "Missing required fields: email, password" },
       { status: 400 },
     );
   }
+  console.log("okkk");
   try {
     const { data } = await axios.post<ExternalApiResponse>(
-      `${API_DOMAIN}${USERS}register-user`,
-      { email, password, username },
+      `${API_DOMAIN}${USERS}login-user`,
+      { email, password },
       {
         headers: { "Content-Type": "application/json" },
         timeout: 10_000,
