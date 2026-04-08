@@ -7,6 +7,7 @@ import hr.tvz.nppjj.studybuddy.repository.UserRepository;
 import lombok.AllArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -15,7 +16,7 @@ import java.util.UUID;
 
 @Service
 @AllArgsConstructor
-@Transactional(readOnly = true)
+//@Transactional(readOnly = true)
 public class UserServiceImpl implements UserService{
     UserRepository userRepository;
     @Override
@@ -61,6 +62,11 @@ public class UserServiceImpl implements UserService{
     @Override
     public void deleteUser(UUID uuid) {
         userRepository.deleteById(uuid);
+    }
+
+    @Override
+    public UserDetailsService userDetailsService() {
+        return username -> userRepository.findUserByUsername(username).orElseThrow(() -> new UserNotFoundException("User not found"));
     }
 
     private UserDTO toDTO(User user){
