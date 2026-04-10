@@ -1,4 +1,5 @@
 "use client";
+import { BookOpen } from "lucide-react";
 //import { Link, useLocation } from "react-router";
 //import { useAuth } from "../contexts/AuthContext";
 //import { Button } from "./ui/button";
@@ -49,7 +50,7 @@ const Navbar = () => {
       <div className="p-6">
         <div className="flex items-center gap-3">
           <div className="p-2 bg-indigo-100 dark:bg-indigo-900 rounded-xl">
-            {/*<BookOpen className="size-6 text-indigo-600 dark:text-indigo-400" />*/}
+            <BookOpen className="size-6 text-indigo-600 dark:text-indigo-400" />
           </div>
           <h1 className="text-xl font-semibold">StudyBuddy</h1>
         </div>
@@ -69,7 +70,6 @@ const Navbar = () => {
                     : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
                 }`}
               >
-                {/*<Icon className="size-5" />*/}
                 <h2>{item.label}</h2>
               </div>
             </Link>
