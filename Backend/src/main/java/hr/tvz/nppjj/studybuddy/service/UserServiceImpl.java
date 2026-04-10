@@ -1,12 +1,18 @@
 package hr.tvz.nppjj.studybuddy.service;
 
+import hr.tvz.nppjj.studybuddy.config.JwtService;
 import hr.tvz.nppjj.studybuddy.dto.UserDTO;
+import hr.tvz.nppjj.studybuddy.exception.UserLoginException;
 import hr.tvz.nppjj.studybuddy.exception.UserNotFoundException;
 import hr.tvz.nppjj.studybuddy.model.User;
 import hr.tvz.nppjj.studybuddy.repository.UserRepository;
+import hr.tvz.nppjj.studybuddy.requests.UserAuthRequest;
+import hr.tvz.nppjj.studybuddy.responses.UserAuthResponse;
 import lombok.AllArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -16,9 +22,11 @@ import java.util.UUID;
 
 @Service
 @AllArgsConstructor
-//@Transactional(readOnly = true)
+@Transactional(readOnly = true)
 public class UserServiceImpl implements UserService{
     UserRepository userRepository;
+    JwtService jwtService;
+    private final AuthenticationManager authenticationManager;
     @Override
     public Optional<UserDTO> getUserByEmail(String email) {
         User user = userRepository.findUserByEmail(email)
@@ -39,11 +47,36 @@ public class UserServiceImpl implements UserService{
     }
 
     @Override
+    public Optional<UserAuthResponse> authenticate(UserAuthRequest request) {
+        authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(
+                        request.getUsername(),
+                        request.getPassword()
+                )
+        );
+        try{
+            User user = userRepository.findUserByUsername(request.getUsername())
+                    .orElseThrow(() -> new UserLoginException("Invalid username or password"));
+            var jwtToken = jwtService.generateToken(user.getUsername());
+            var refreshToken = jwtService.generateRefreshToken(user.getUsername());
+            return Optional.of(UserAuthResponse.builder()
+                    .accessToken(jwtToken)
+                    .refreshToken(refreshToken)
+                    .build());
+        }catch (UserLoginException u){
+            return Optional.empty();
+        }
+
+    }
+
+    @Override
+    @Transactional
     public Optional<UserDTO> newUser(User user) {
         return Optional.of(toDTO(userRepository.saveAndFlush(user)));
     }
 
     @Override
+    @Transactional
     public Optional<UserDTO> updateUser(UUID uuid, User user) {
         try{
             userRepository.findUserById(uuid).map(u->{
@@ -60,13 +93,9 @@ public class UserServiceImpl implements UserService{
     }
 
     @Override
+    @Transactional
     public void deleteUser(UUID uuid) {
         userRepository.deleteById(uuid);
-    }
-
-    @Override
-    public UserDetailsService userDetailsService() {
-        return username -> userRepository.findUserByUsername(username).orElseThrow(() -> new UserNotFoundException("User not found"));
     }
 
     private UserDTO toDTO(User user){

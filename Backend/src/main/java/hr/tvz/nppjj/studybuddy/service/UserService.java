@@ -2,6 +2,8 @@ package hr.tvz.nppjj.studybuddy.service;
 
 import hr.tvz.nppjj.studybuddy.dto.UserDTO;
 import hr.tvz.nppjj.studybuddy.model.User;
+import hr.tvz.nppjj.studybuddy.requests.UserAuthRequest;
+import hr.tvz.nppjj.studybuddy.responses.UserAuthResponse;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -17,6 +19,7 @@ public interface UserService {
     Optional<UserDTO> newUser(User user);
     Optional<UserDTO> updateUser(UUID uuid, User user);
     void deleteUser(UUID uuid);
-    UserDetailsService userDetailsService();
+
+    Optional<UserAuthResponse> authenticate(UserAuthRequest request);
 
 }
