@@ -2,6 +2,8 @@ package hr.tvz.nppjj.studybuddy.controller;
 
 import hr.tvz.nppjj.studybuddy.dto.UserDTO;
 import hr.tvz.nppjj.studybuddy.model.User;
+import hr.tvz.nppjj.studybuddy.requests.UserAuthRequest;
+import hr.tvz.nppjj.studybuddy.responses.UserAuthResponse;
 import hr.tvz.nppjj.studybuddy.service.UserService;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
@@ -28,6 +30,13 @@ public class UserController {
     @GetMapping
     Page<UserDTO> getUsers(Pageable pageable){
         return userService.getUsers(pageable);
+    }
+
+    @PostMapping("login")
+    public ResponseEntity<UserAuthResponse> userLogin(@RequestBody UserAuthRequest userAuthRequest){
+        return userService.authenticate(userAuthRequest).map(uar -> ResponseEntity.status(HttpStatus.OK).body(uar))
+                .orElseGet(() -> ResponseEntity.badRequest().build());
+        //return new ResponseEntity<>(userService.authenticate(userAuthRequest), HttpStatus.OK);
     }
 
     @PostMapping("register-user")
