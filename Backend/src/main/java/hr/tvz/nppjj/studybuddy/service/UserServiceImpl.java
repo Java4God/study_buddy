@@ -2,6 +2,7 @@ package hr.tvz.nppjj.studybuddy.service;
 
 import hr.tvz.nppjj.studybuddy.config.JwtService;
 import hr.tvz.nppjj.studybuddy.dto.UserDTO;
+import hr.tvz.nppjj.studybuddy.enumerators.Role;
 import hr.tvz.nppjj.studybuddy.exception.UserLoginException;
 import hr.tvz.nppjj.studybuddy.exception.UserNotFoundException;
 import hr.tvz.nppjj.studybuddy.model.User;
@@ -14,6 +15,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,6 +28,7 @@ import java.util.UUID;
 public class UserServiceImpl implements UserService{
     UserRepository userRepository;
     JwtService jwtService;
+    private final BCryptPasswordEncoder encoder = new BCryptPasswordEncoder(12);
     private final AuthenticationManager authenticationManager;
     @Override
     public Optional<UserDTO> getUserByEmail(String email) {
@@ -72,6 +75,8 @@ public class UserServiceImpl implements UserService{
     @Override
     @Transactional
     public Optional<UserDTO> newUser(User user) {
+        user.setPassword(encoder.encode(user.getPassword()));
+        user.setRole(Role.ROLE_BASIC_USER);
         return Optional.of(toDTO(userRepository.saveAndFlush(user)));
     }
 
