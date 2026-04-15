@@ -25,7 +25,10 @@ public class ApplicationConfig{
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http.csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/users/**").permitAll()
+                        .requestMatchers("/users/login").permitAll()
+                        .requestMatchers("/users/register-user").permitAll()
+                        .requestMatchers("/users").hasRole("ADMIN")
+                        .requestMatchers("/users/**").authenticated()
                         .requestMatchers("/password-reset/**").permitAll()
                         .requestMatchers("/exams/**").permitAll()
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html").permitAll()
