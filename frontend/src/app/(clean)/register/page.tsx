@@ -67,10 +67,9 @@ const RegisterPage = () => {
   const [repeatPasswordError, setRepeatPasswordError] = useState<
     string | undefined
   >("");
+  const [formError, setFormError] = useState<string | undefined>(undefined);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
-
-  console.log("o", username);
 
   const strength = getPasswordStrength(password);
 
@@ -88,7 +87,12 @@ const RegisterPage = () => {
     } else {
       setRepeatPasswordError(undefined);
     }
-    if (emailError || passwordError || usernameError || password !== password) {
+    if (
+      emailError ||
+      passwordError ||
+      usernameError ||
+      password !== repeatPassword
+    ) {
       isWrong = true;
     }
     return isWrong;
@@ -96,6 +100,7 @@ const RegisterPage = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setFormError(undefined);
 
     const isWrong = checkInputErrors();
     if (isWrong) {
@@ -108,11 +113,23 @@ const RegisterPage = () => {
       await axios.post("/api/auth/register", { username, email, password });
       router.push("/dashboard");
     } catch (error) {
-      console.error("Registration failed:", error);
+      if (axios.isAxiosError(error)) {
+        const status = error.response?.status;
+        const message =
+          (error.response?.data as { message?: string })?.message ??
+          "Registration failed";
+
+        if (status === 403) {
+          setEmailError("Email is already in use.");
+          setFormError(undefined);
+        } else {
+          setFormError(message);
+        }
+      } else {
+        setFormError("Registration failed. Please try again.");
+      }
     } finally {
       setLoading(false);
-      //delete later - testing
-      router.push("/dashboard");
     }
   };
 
@@ -133,8 +150,8 @@ const RegisterPage = () => {
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <Input
-              label="Name"
-              placeholder="Alex Johnson"
+              label="Username"
+              placeholder="alex.johnson"
               type="text"
               value={username}
               setValue={(value) => setUsername(value)}
@@ -185,6 +202,11 @@ const RegisterPage = () => {
             <button type="submit" className="w-full" disabled={loading}>
               {loading ? "Creating account..." : "Create Account"}
             </button>
+            {formError ? (
+              <p className="text-sm text-red-600 dark:text-red-400 mt-2">
+                {formError}
+              </p>
+            ) : null}
           </form>
           <div className="mt-4 text-center text-sm text-gray-600 dark:text-gray-400">
             Already have an account?{" "}

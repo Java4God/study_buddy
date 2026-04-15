@@ -12,12 +12,8 @@ interface RegisterRequestBody {
 }
 
 interface ExternalApiResponse {
-  token: string;
-  user: {
-    id: string;
-    email: string;
-    username: string;
-  };
+  access_token?: string;
+  refresh_token?: string;
 }
 
 export async function POST(req: Request) {
@@ -39,10 +35,10 @@ export async function POST(req: Request) {
       },
     );
 
-    const { token, user } = data;
+    const { access_token, refresh_token } = data;
 
     const cookieStore = await cookies();
-    cookieStore.set("auth_token", token, {
+    cookieStore.set("auth_token", access_token ?? "", {
       httpOnly: true,
       sameSite: "lax",
       maxAge: 60 * 60,
@@ -50,7 +46,7 @@ export async function POST(req: Request) {
       path: "/",
     });
 
-    return NextResponse.json(user, { status: 201 });
+    return NextResponse.json(data, { status: 201 });
   } catch (error) {
     if (axios.isAxiosError(error)) {
       const status = error.response?.status ?? 500;
@@ -59,7 +55,6 @@ export async function POST(req: Request) {
       return NextResponse.json({ message }, { status });
     }
 
-    console.error("[register] Unexpected error:", error);
     return NextResponse.json(
       { message: "Internal server error" },
       { status: 500 },
