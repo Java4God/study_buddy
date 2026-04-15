@@ -5,53 +5,50 @@ import { USERS } from "@/app/consts";
 
 const API_DOMAIN = process.env.API_DOMAIN ?? "";
 
-interface RegisterRequestBody {
-  email: string;
+interface LoginRequestBody {
+  username: string;
   password: string;
 }
 
 interface ExternalApiResponse {
-  token: string;
-  user: {
-    id: string;
-    email: string;
-    username: string;
-  };
+  access_token: string;
+  refresh_token: string;
 }
 
 export async function POST(req: Request) {
-  const { email, password }: RegisterRequestBody = await req.json();
+  const { username, password }: LoginRequestBody = await req.json();
 
-  console.log("ok");
-  if (!email || !password) {
+  if (!username || !password) {
     return NextResponse.json(
-      { message: "Missing required fields: email, password" },
+      { message: "Missing required fields: username, password" },
       { status: 400 },
     );
   }
-  console.log("okkk");
+
   try {
     const { data } = await axios.post<ExternalApiResponse>(
-      `${API_DOMAIN}${USERS}login-user`,
-      { email, password },
+      `${API_DOMAIN}${USERS}login`,
+      { username, password },
       {
         headers: { "Content-Type": "application/json" },
         timeout: 10_000,
       },
     );
 
-    const { token, user } = data;
+    const { access_token } = data;
 
     const cookieStore = await cookies();
-    cookieStore.set("auth_token", token, {
+    cookieStore.set("auth_token", access_token, {
       httpOnly: true,
       sameSite: "lax",
-      maxAge: 60 * 60,
+      maxAge: 1000 * 60 * 60,
       secure: process.env.NODE_ENV === "production",
       path: "/",
     });
 
-    return NextResponse.json(user, { status: 201 });
+    return new Response(JSON.stringify({ success: true }), {
+      status: 200,
+    });
   } catch (error) {
     if (axios.isAxiosError(error)) {
       const status = error.response?.status ?? 500;
@@ -60,7 +57,6 @@ export async function POST(req: Request) {
       return NextResponse.json({ message }, { status });
     }
 
-    console.error("[register] Unexpected error:", error);
     return NextResponse.json(
       { message: "Internal server error" },
       { status: 500 },
