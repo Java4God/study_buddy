@@ -21,5 +21,5 @@ public interface UserService {
     void deleteUser(UUID uuid);
 
     Optional<UserAuthResponse> authenticate(UserAuthRequest request);
-
+    UserAuthResponse refreshToken(String refreshToken);
 }

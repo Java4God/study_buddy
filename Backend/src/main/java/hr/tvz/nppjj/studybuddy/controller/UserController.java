@@ -2,6 +2,7 @@ package hr.tvz.nppjj.studybuddy.controller;
 
 import hr.tvz.nppjj.studybuddy.dto.UserDTO;
 import hr.tvz.nppjj.studybuddy.model.User;
+import hr.tvz.nppjj.studybuddy.requests.RefreshTokenRequest;
 import hr.tvz.nppjj.studybuddy.requests.UserAuthRequest;
 import hr.tvz.nppjj.studybuddy.responses.UserAuthResponse;
 import hr.tvz.nppjj.studybuddy.service.UserService;
@@ -43,6 +44,11 @@ public class UserController {
     ResponseEntity<UserDTO> newUser(@Valid @RequestBody User user){
         return userService.newUser(user).map(u -> ResponseEntity.status(HttpStatus.OK).body(u))
                 .orElseGet(()-> ResponseEntity.badRequest().build());
+    }
+
+    @PostMapping("refresh")
+    public ResponseEntity<UserAuthResponse> refreshToken(@RequestBody RefreshTokenRequest refreshToken){
+        return new ResponseEntity<>(userService.refreshToken(refreshToken.refreshToken()), HttpStatus.OK);
     }
 
     @PutMapping("update-user/{id}")
