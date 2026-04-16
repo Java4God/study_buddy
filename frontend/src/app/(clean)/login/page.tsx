@@ -14,7 +14,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 export default function LoginPage() {
-  const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -24,7 +24,7 @@ export default function LoginPage() {
     e.preventDefault();
     setError("");
 
-    if (!email || !password) {
+    if (!username || !password) {
       setError("Please fill in all fields");
       return;
     }
@@ -32,17 +32,15 @@ export default function LoginPage() {
     setLoading(true);
     try {
       await axios.post("/api/auth/login", {
-        email,
+        username,
         password,
       });
       router.push("/dashboard");
     } catch (error) {
       console.error("Login failed:", error);
-      setError("Invalid email or password");
+      setError("Invalid username or password");
     } finally {
       setLoading(false);
-      //delete later - testing
-      router.push("/dashboard");
     }
   };
 
@@ -63,13 +61,13 @@ export default function LoginPage() {
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <Input
-              label={"Email"}
+              label={"Username"}
               setValue={(value) => {
-                setEmail(value);
+                setUsername(value);
               }}
-              placeholder="name.surname@mail.com"
-              value={email}
-              type="email"
+              placeholder="your.username"
+              value={username}
+              type="text"
             />
             <Input
               label={"Password"}

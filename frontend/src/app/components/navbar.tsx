@@ -1,4 +1,5 @@
 "use client";
+import axios from "axios";
 import { BookOpen } from "lucide-react";
 //import { Link, useLocation } from "react-router";
 //import { useAuth } from "../contexts/AuthContext";
@@ -40,8 +41,8 @@ const Navbar = () => {
   //const { theme, setTheme } = useTheme();
   const router = useRouter();
 
-  const logout = () => {
-    //Logout
+  const logout = async () => {
+    await axios.post("/api/auth/logout");
     router.push("/login");
   };
 
