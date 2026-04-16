@@ -134,8 +134,8 @@ const RegisterPage = () => {
   };
 
   return (
-    <div className="min-h-screen w-full flex items-center justify-center bg-gradient-to-br from-indigo-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-900 dark:to-gray-800 p-4">
-      <Card className="w-full max-w-md border rounded-xl pt-6">
+    <div className="min-h-screen w-full flex items-center justify-center bg-switch-background/20 p-4">
+      <Card className="w-full max-w-md border rounded-xl pt-6 bg-background">
         <CardHeader className="text-center">
           <div className="flex justify-center mb-4">
             <div className="p-3 bg-indigo-100 dark:bg-indigo-900 rounded-2xl">
