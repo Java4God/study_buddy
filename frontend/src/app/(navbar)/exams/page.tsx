@@ -11,7 +11,6 @@ import {
   BookOpen,
 } from "lucide-react";
 
-//import { Badge } from "@/components/ui/badge";
 import Button from "@/app/components/button";
 import {
   Card,
@@ -31,8 +30,8 @@ import {
 interface Exam {
   id: string | number | null;
   subjectName: string;
-  examDate: string; // "YYYY-MM-DD"
-  examTime: string; // "HH:MM"
+  examDate: string;
+  examTime: string;
   location?: string;
   notes?: string;
 }
@@ -115,7 +114,7 @@ const EMPTY_FORM = {
 
 type FilterType = "all" | "upcoming" | "week" | "past";
 
-export default function ExamTracker() {
+export default function ExamScheduler() {
   const [exams, setExams] = useState<Exam[]>(INITIAL_EXAMS);
   const [filter, setFilter] = useState<FilterType>("all");
   const [loading, setLoading] = useState(true);
