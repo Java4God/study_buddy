@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import axios from "axios";
 import {
   MapPin,
   Trash2,
@@ -24,13 +25,14 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from "@/app/components/dialogs";
 
 interface Exam {
-  id: number;
-  subject: string;
-  date: string; // "YYYY-MM-DD"
-  time: string; // "HH:MM"
+  id: string | number | null;
+  subjectName: string;
+  examDate: string; // "YYYY-MM-DD"
+  examTime: string; // "HH:MM"
   location?: string;
   notes?: string;
 }
@@ -83,73 +85,25 @@ function getUrgencyBadge(daysUntil: number): {
   if (daysUntil === 0)
     return {
       label: "Today",
-      className: "bg-red-50 text-red-700 border-red-100",
+      className: "bg-red-100 text-red-700 border-red-100",
     };
   if (daysUntil <= 5)
     return {
       label: "Tomorrow",
-      className: "bg-orange-50 text-orange-700 border-orange-100",
+      className: "bg-orange-100 text-orange-700 border-orange-100",
     };
   if (daysUntil <= 10)
     return {
       label: "Tomorrow",
-      className: "bg-yellow-50 text-yellow-700 border-yellow-100",
+      className: "bg-yellow-100 text-yellow-700 border-yellow-100",
     };
   return {
     label: `${daysUntil} days`,
-    className: "bg-green-50 text-green-700 border-green-100",
+    className: "bg-green-100 text-green-700 border-green-100",
   };
 }
 
-const INITIAL_EXAMS: Exam[] = [
-  {
-    id: 1,
-    subject: "Calculus II",
-    date: "2026-04-18",
-    time: "09:00",
-    location: "Room 204",
-    notes: "Bring graphing calculator",
-  },
-  {
-    id: 2,
-    subject: "Organic Chemistry",
-    date: "2026-04-21",
-    time: "14:00",
-    location: "Science Hall B",
-    notes: "Chapters 8–12 focus",
-  },
-  {
-    id: 3,
-    subject: "Modern History",
-    date: "2026-04-28",
-    time: "10:30",
-    location: "Auditorium A",
-  },
-  {
-    id: 4,
-    subject: "Linear Algebra",
-    date: "2026-05-05",
-    time: "13:00",
-    location: "Math Building 301",
-    notes: "Proofs and eigenvalues",
-  },
-  {
-    id: 5,
-    subject: "English Literature",
-    date: "2026-04-10",
-    time: "11:00",
-    location: "Humanities 102",
-    notes: "Past exam",
-  },
-  {
-    id: 6,
-    subject: "English Literature",
-    date: "2026-04-10",
-    time: "11:00",
-    location: "Humanities 102",
-    notes: "Past exam",
-  },
-];
+const INITIAL_EXAMS: Exam[] = [];
 
 const EMPTY_FORM = {
   subject: "",
@@ -163,19 +117,56 @@ type FilterType = "all" | "upcoming" | "week" | "past";
 
 export default function ExamTracker() {
   const [exams, setExams] = useState<Exam[]>(INITIAL_EXAMS);
-  const [nextId, setNextId] = useState(6);
   const [filter, setFilter] = useState<FilterType>("all");
+  const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState("");
 
   const [showModal, setShowModal] = useState(false);
-  const [editingId, setEditingId] = useState<number | null>(null);
+  const [editingId, setEditingId] = useState<string | number | null>(null);
   const [form, setForm] = useState(EMPTY_FORM);
   const [formErrors, setFormErrors] = useState<FormErrors>({});
 
-  const [examToDelete, setExamToDelete] = useState<number | null>(null);
+  const [examToDelete, setExamToDelete] = useState<string | number | null>(
+    null,
+  );
+
+  function mapExamDto(dto: unknown): Exam {
+    const raw = dto as Record<string, unknown>;
+
+    return {
+      id: raw.id as string | number,
+      subjectName: (raw.subjectName ?? raw.subject ?? "") as string,
+      examDate: (raw.examDate ?? raw.date ?? "") as string,
+      examTime: (raw.examTime ?? raw.time ?? "") as string,
+      location: (raw.location as string) ?? undefined,
+      notes: (raw.notes as string) ?? undefined,
+    };
+  }
+
+  useEffect(() => {
+    const fetchExams = async () => {
+      try {
+        const response = await axios.get("/api/exam");
+        const payload = response.data;
+        const list = Array.isArray(payload)
+          ? payload
+          : (payload?.content ?? []);
+
+        setExams(list.map(mapExamDto));
+      } catch (error) {
+        console.error(error);
+        setFetchError("Could not load exams.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchExams();
+  }, []);
 
   const sortedExams = [...exams].sort((a, b) => {
-    const da = getDaysUntil(a.date);
-    const db = getDaysUntil(b.date);
+    const da = getDaysUntil(a.examDate);
+    const db = getDaysUntil(b.examDate);
     if (da < 0 && db >= 0) return 1;
     if (db < 0 && da >= 0) return -1;
     if (da < 0 && db < 0) return db - da;
@@ -183,16 +174,18 @@ export default function ExamTracker() {
   });
 
   const filteredExams = sortedExams.filter((e) => {
-    const n = getDaysUntil(e.date);
+    const n = getDaysUntil(e.examDate);
     if (filter === "upcoming") return n >= 0;
     if (filter === "week") return n >= 0 && n <= 7;
     if (filter === "past") return n < 0;
     return true;
   });
 
-  const upcomingExams = sortedExams.filter((e) => getDaysUntil(e.date) >= 0);
+  const upcomingExams = sortedExams.filter(
+    (e) => getDaysUntil(e.examDate) >= 0,
+  );
   const thisWeekCount = exams.filter((e) => {
-    const n = getDaysUntil(e.date);
+    const n = getDaysUntil(e.examDate);
     return n >= 0 && n <= 7;
   }).length;
 
@@ -203,13 +196,13 @@ export default function ExamTracker() {
     setShowModal(true);
   }
 
-  function openEdit(id: number) {
+  function openEdit(id: string | number | null) {
     const exam = exams.find((e) => e.id === id)!;
     setEditingId(id);
     setForm({
-      subject: exam.subject,
-      date: exam.date,
-      time: exam.time,
+      subject: exam.subjectName,
+      date: exam.examDate,
+      time: exam.examTime,
       location: exam.location ?? "",
       notes: exam.notes ?? "",
     });
@@ -226,43 +219,60 @@ export default function ExamTracker() {
     return Object.keys(errors).length === 0;
   }
 
-  function handleSave() {
+  async function handleSave() {
     if (!validateForm()) return;
 
-    if (editingId !== null) {
-      const updated: Exam = {
-        id: editingId,
-        subject: form.subject.trim(),
-        date: form.date,
-        time: form.time,
-        location: form.location.trim() || undefined,
-        notes: form.notes.trim() || undefined,
-      };
-      setExams((prev) => prev.map((e) => (e.id === editingId ? updated : e)));
-      console.log("[UPDATE EXAM]", updated);
-    } else {
-      const created: Exam = {
-        id: nextId,
-        subject: form.subject.trim(),
-        date: form.date,
-        time: form.time,
-        location: form.location.trim() || undefined,
-        notes: form.notes.trim() || undefined,
-      };
-      setExams((prev) => [...prev, created]);
-      setNextId((n) => n + 1);
-      console.log("[CREATE EXAM]", created);
-    }
+    const updatedExam: Exam = {
+      id: editingId,
+      subjectName: form.subject.trim(),
+      examDate: form.date,
+      examTime: form.time,
+      location: form.location.trim() || undefined,
+      notes: form.notes.trim() || undefined,
+    };
 
-    setShowModal(false);
+    try {
+      if (editingId !== null) {
+        const response = await axios.put(
+          `/api/exam?id=${editingId}`,
+          updatedExam,
+          {
+            headers: { "Content-Type": "application/json" },
+            timeout: 10_000,
+          },
+        );
+
+        const exam = mapExamDto(response.data);
+        setExams((prev) => prev.map((e) => (e.id === editingId ? exam : e)));
+      } else {
+        const response = await axios.post("/api/exam", updatedExam, {
+          headers: { "Content-Type": "application/json" },
+          timeout: 10_000,
+        });
+
+        const exam = mapExamDto(response.data);
+        setExams((prev) => [...prev, exam]);
+      }
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setShowModal(false);
+    }
   }
 
-  function confirmDelete() {
+  async function confirmDelete() {
     if (examToDelete === null) return;
-    const exam = exams.find((e) => e.id === examToDelete);
-    console.log("[DELETE EXAM]", exam);
-    setExams((prev) => prev.filter((e) => e.id !== examToDelete));
-    setExamToDelete(null);
+
+    try {
+      await axios.delete(`/api/exam?id=${examToDelete}`, {
+        timeout: 10_000,
+      });
+      setExams((prev) => prev.filter((e) => e.id !== examToDelete));
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setExamToDelete(null);
+    }
   }
 
   function updateField(field: keyof typeof form, value: string) {
@@ -297,7 +307,7 @@ export default function ExamTracker() {
               gap: "0.5rem",
               boxShadow: "0 1px 2px 0 rgba(0, 0, 0, 0.1)",
             }}
-            className="!bg-black text-white hover:!bg-indigo-600 shadow-sm transition"
+            variant="primary"
             onClick={openAdd}
           >
             <Plus className="size-4" />
@@ -321,142 +331,152 @@ export default function ExamTracker() {
           ))}
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-[1fr_280px] gap-6">
-          <div className="space-y-4">
-            {filteredExams.length === 0 ? (
-              <div className="text-center py-20 text-slate-400">
-                <BookOpen className="size-10 mx-auto mb-3 opacity-40" />
-                <p className="text-sm">No exams found for this filter.</p>
-              </div>
-            ) : (
-              filteredExams.map((exam) => {
-                const days = getDaysUntil(exam.date);
-                const badge = getUrgencyBadge(days);
-                return (
-                  <Card
-                    key={exam.id}
-                    className="border border-gray-200 rounded-2xl shadow-sm hover:shadow-lg transition-shadow duration-200 bg-white"
-                  >
-                    <CardContent className="p-6">
-                      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-                        <div className="flex-1 min-w-0">
-                          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                            <div>
-                              <div className="flex-row flex gap-3 mb-3">
-                                <h3 className="text-lg font-semibold text-slate-900 truncate">
-                                  {exam.subject}
-                                </h3>
-                                <span
-                                  className={`inline-flex items-center rounded-full border px-2 py-1 text-xs font-semibold ${badge.className}`}
-                                >
-                                  {badge.label}
-                                </span>
-                              </div>
+        {loading ? (
+          <div className="rounded-2xl border border-gray-200 bg-white p-8 text-center text-sm text-slate-500 shadow-sm">
+            Loading exams...
+          </div>
+        ) : fetchError ? (
+          <div className="rounded-2xl border border-red-200 bg-red-50 p-8 text-center text-sm text-red-700 shadow-sm">
+            {fetchError}
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 lg:grid-cols-[1fr_280px] gap-6">
+            <div className="space-y-4">
+              {filteredExams.length === 0 ? (
+                <div className="text-center py-20 text-slate-400">
+                  <BookOpen className="size-10 mx-auto mb-3 opacity-40" />
+                  <p className="text-sm">No exams found for this filter.</p>
+                </div>
+              ) : (
+                filteredExams.map((exam) => {
+                  const days = getDaysUntil(exam.examDate);
+                  const badge = getUrgencyBadge(days);
+                  return (
+                    <Card
+                      key={exam.id}
+                      className="border border-gray-200 rounded-2xl shadow-sm hover:shadow-lg transition-shadow duration-200 bg-white"
+                    >
+                      <CardContent className="p-6">
+                        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                          <div className="flex-1 min-w-0">
+                            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                              <div>
+                                <div className="flex-row flex gap-3 mb-3 items-center">
+                                  <h3 className="text-lg font-semibold text-slate-900 truncate">
+                                    {exam.subjectName}
+                                  </h3>
+                                  <span
+                                    className={`inline-flex items-center rounded-full border px-2 py-1 text-xs font-semibold ${badge.className}`}
+                                  >
+                                    {badge.label}
+                                  </span>
+                                </div>
 
-                              <p className="text-sm text-slate-500 mt-1">
-                                {formatDate(exam.date)} ·{" "}
-                                {formatTime(exam.time)}
-                              </p>
+                                <p className="text-sm text-slate-500 mt-1">
+                                  {formatDate(exam.examDate)} ·{" "}
+                                  {formatTime(exam.examTime)}
+                                </p>
+                              </div>
+                            </div>
+
+                            <div className="mt-5 space-y-3 text-sm text-slate-500">
+                              {exam.location && (
+                                <div className="flex items-center gap-2">
+                                  <MapPin className="size-4 shrink-0 text-slate-400" />
+                                  <span>{exam.location}</span>
+                                </div>
+                              )}
+                              {exam.notes && (
+                                <div className="rounded-2xl bg-slate-50 p-3 text-slate-600">
+                                  <p className="text-sm">{exam.notes}</p>
+                                </div>
+                              )}
                             </div>
                           </div>
 
-                          <div className="mt-5 space-y-3 text-sm text-slate-500">
-                            {exam.location && (
-                              <div className="flex items-center gap-2">
-                                <MapPin className="size-4 shrink-0 text-slate-400" />
-                                <span>{exam.location}</span>
-                              </div>
-                            )}
-                            {exam.notes && (
-                              <div className="rounded-2xl bg-slate-50 p-3 text-slate-600">
-                                <p className="text-sm">{exam.notes}</p>
-                              </div>
-                            )}
+                          <div className="flex items-center gap-2">
+                            <button
+                              className=" p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-100 rounded-full"
+                              onClick={() => openEdit(exam.id)}
+                            >
+                              <Pencil className="size-4" color="blue" />
+                            </button>
+                            <button
+                              className=" p-2 text-slate-400 hover:text-red-600 hover:bg-red-100 rounded-full"
+                              onClick={() => setExamToDelete(exam.id)}
+                            >
+                              <Trash2 className="size-4" color="red" />
+                            </button>
                           </div>
                         </div>
+                      </CardContent>
+                    </Card>
+                  );
+                })
+              )}
+            </div>
 
-                        <div className="flex items-center gap-2">
-                          <button
-                            className=" p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50"
-                            onClick={() => openEdit(exam.id)}
-                          >
-                            <Pencil className="size-4" color="green" />
-                          </button>
-                          <button
-                            className=" p-2 text-slate-400 hover:text-red-600 hover:bg-red-50"
-                            onClick={() => setExamToDelete(exam.id)}
-                          >
-                            <Trash2 className="size-4" color="red" />
-                          </button>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                );
-              })
-            )}
+            <div className="space-y-4">
+              <Card className="border border-gray-100 shadow-sm bg-white rounded-2xl p-4">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm font-semibold text-gray-500 uppercase tracking-wide">
+                    Overview
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div>
+                    <p className="text-sm text-gray-400 mb-0.5">Total exams</p>
+                    <p className="text-3xl  text-gray-900">{exams.length}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-400 mb-0.5">Next exam</p>
+                    <p className="text-lg font-medium ">
+                      {upcomingExams.length > 0
+                        ? getDaysUntil(upcomingExams[0].examDate) + " days"
+                        : "—"}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-400 mb-0.5">This week</p>
+                    <p className="text-lg  text-gray-900">{thisWeekCount}</p>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="border border-gray-100 shadow-sm bg-white rounded-2xl p-4">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm font-semibold text-slate-500 uppercase tracking-wide">
+                    Study Tips
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3 text-sm">
+                  <div className="rounded-2xl border border-blue-200 bg-blue-50 p-3 ">
+                    <p className="font-bold text-blue-900 mb-1">Start Early</p>
+                    <p className="text-gray-600 text-xs">
+                      Begin studying at least 2 weeks before your exam
+                    </p>
+                  </div>
+                  <div className="rounded-2xl border border-purple-200 bg-purple-100 p-4">
+                    <p className="font-bold text-purple-900 mb-1">
+                      Use Flashcards
+                    </p>
+                    <p className="text-gray-600 text-xs">
+                      Create flashcard decks for key concepts
+                    </p>
+                  </div>
+                  <div className="rounded-2xl border border-blue-200 bg-blue-50 p-4">
+                    <p className="font-bold text-blue-900 mb-1">
+                      Pomodoro Method
+                    </p>
+                    <p className="text-gray-600 text-xs">
+                      Use focused 25-minute study sessions
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
           </div>
-
-          <div className="space-y-4">
-            <Card className="border border-gray-100 shadow-sm bg-white rounded-2xl p-4">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-sm font-semibold text-gray-500 uppercase tracking-wide">
-                  Overview
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <p className="text-sm text-gray-400 mb-0.5">Total exams</p>
-                  <p className="text-3xl  text-gray-900">{exams.length}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-400 mb-0.5">Next exam</p>
-                  <p className="text-lg font-medium ">
-                    {upcomingExams.length > 0
-                      ? getDaysUntil(upcomingExams[0].date) + " days"
-                      : "—"}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-400 mb-0.5">This week</p>
-                  <p className="text-lg  text-gray-900">{thisWeekCount}</p>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="border border-gray-100 shadow-sm bg-white rounded-2xl p-4">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-sm font-semibold text-slate-500 uppercase tracking-wide">
-                  Study Tips
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3 text-sm">
-                <div className="rounded-2xl border border-blue-200 bg-blue-50 p-3 ">
-                  <p className="font-bold text-blue-900 mb-1">Start Early</p>
-                  <p className="text-gray-600 text-xs">
-                    Begin studying at least 2 weeks before your exam
-                  </p>
-                </div>
-                <div className="rounded-2xl border border-purple-200 bg-purple-100 p-4">
-                  <p className="font-bold text-purple-900 mb-1">
-                    Use Flashcards
-                  </p>
-                  <p className="text-gray-600 text-xs">
-                    Create flashcard decks for key concepts
-                  </p>
-                </div>
-                <div className="rounded-2xl border border-blue-200 bg-blue-50 p-4">
-                  <p className="font-bold text-blue-900 mb-1">
-                    Pomodoro Method
-                  </p>
-                  <p className="text-gray-600 text-xs">
-                    Use focused 25-minute study sessions
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
+        )}
 
         <Dialog
           open={showModal}
@@ -464,11 +484,15 @@ export default function ExamTracker() {
             if (!open) setShowModal(false);
           }}
         >
-          <DialogContent className="max-w-md bg-white">
+          <DialogContent>
             <DialogHeader>
               <DialogTitle>
                 {editingId !== null ? "Edit Exam" : "Add New Exam"}
               </DialogTitle>
+              <DialogDescription>
+                Fill in the exam details below to{" "}
+                {editingId !== null ? "update" : "create"} your exam.
+              </DialogDescription>
             </DialogHeader>
 
             <div className="space-y-4 pt-2">
@@ -553,6 +577,7 @@ export default function ExamTracker() {
                   Cancel
                 </Button>
                 <Button
+                  variant="primary"
                   className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white"
                   onClick={handleSave}
                 >
@@ -569,7 +594,7 @@ export default function ExamTracker() {
             if (!open) setExamToDelete(null);
           }}
         >
-          <DialogContent className="max-w-sm bg-white">
+          <DialogContent>
             <DialogHeader>
               <div className="flex items-center gap-3 mb-1">
                 <div className="p-2 bg-red-100 rounded-xl">
@@ -577,11 +602,14 @@ export default function ExamTracker() {
                 </div>
                 <DialogTitle>Delete Exam</DialogTitle>
               </div>
+              <DialogDescription>
+                This action cannot be undone.
+              </DialogDescription>
             </DialogHeader>
             <p className="text-sm text-gray-500 mb-6">
               Are you sure you want to delete{" "}
               <span className="font-medium text-gray-800">
-                {exams.find((e) => e.id === examToDelete)?.subject}
+                {exams.find((e) => e.id === examToDelete)?.subjectName}
               </span>
               ? This action cannot be undone.
             </p>
@@ -594,7 +622,8 @@ export default function ExamTracker() {
                 Cancel
               </Button>
               <Button
-                className="flex-1 bg-red-600 hover:bg-red-700 text-white"
+                variant="danger"
+                className="flex-1"
                 onClick={confirmDelete}
               >
                 Delete
