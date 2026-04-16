@@ -26,6 +26,7 @@ public class PasswordResetServiceImpl implements PasswordResetService {
     private final UserRepository userRepository;
     private final PasswordResetTokenRepository tokenRepository;
     private final PasswordEncoder passwordEncoder;
+    private final EmailService emailService;
 
     @Override
     @Transactional
@@ -43,9 +44,7 @@ public class PasswordResetServiceImpl implements PasswordResetService {
 
         tokenRepository.save(resetToken);
 
-        // TODO: Send email with reset link containing token
-        // Za sada samo logiram da se može testirati u swaggeru, nije implementiran spring mail
-        log.info("Password reset token for {}: {}", dto.email(), token);
+        emailService.sendPasswordResetEmail(dto.email(), token);
     }
 
     @Override
