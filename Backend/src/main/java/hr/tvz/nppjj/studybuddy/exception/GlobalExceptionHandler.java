@@ -41,4 +41,10 @@ public class GlobalExceptionHandler {
         error.put("error", ex.getMessage());
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
     }
+
+    @ExceptionHandler(PomodoroSessionNotFoundException.class)
+    public ResponseEntity<Map<String, String>> handlePomodoroNotFound(PomodoroSessionNotFoundException e) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(Map.of("error", e.getMessage()));
+    }
 }

@@ -33,6 +33,7 @@ public class ApplicationConfig{
                         .requestMatchers("/password-reset/**").permitAll()
                         .requestMatchers("/exams/**").permitAll()
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html").permitAll()
+                        .requestMatchers("/pomodoro-sessions/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
