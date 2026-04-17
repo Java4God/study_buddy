@@ -27,6 +27,7 @@ public class ApplicationConfig{
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/users/login").permitAll()
                         .requestMatchers("/users/register-user").permitAll()
+                        .requestMatchers("/users/refresh").permitAll()
                         .requestMatchers("/users").hasRole("ADMIN")
                         .requestMatchers("/users/**").authenticated()
                         .requestMatchers("/password-reset/**").permitAll()
