@@ -15,6 +15,7 @@ import java.util.UUID;
 @RestController
 @RequestMapping("exams")
 @AllArgsConstructor
+@CrossOrigin(origins = "http://localhost:3000")
 public class ExamScheduleController {
 
     private final ExamScheduleService examScheduleService;

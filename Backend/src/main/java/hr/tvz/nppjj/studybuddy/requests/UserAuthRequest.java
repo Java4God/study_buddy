@@ -1,15 +1,5 @@
 package hr.tvz.nppjj.studybuddy.requests;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
-@Data
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
-public class UserAuthRequest {
-    private String username;
-    private String password;
-}
+public record UserAuthRequest (String username,
+                               String password)
+{}

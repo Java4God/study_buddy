@@ -13,6 +13,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("password-reset")
 @AllArgsConstructor
+@CrossOrigin(origins = "http://localhost:3000")
 public class PasswordResetController {
 
     private final PasswordResetService passwordResetService;

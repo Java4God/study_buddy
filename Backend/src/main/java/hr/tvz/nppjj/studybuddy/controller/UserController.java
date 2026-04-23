@@ -19,6 +19,7 @@ import java.util.UUID;
 @RestController
 @RequestMapping("users")
 @AllArgsConstructor
+@CrossOrigin(origins = "http://localhost:3000")
 public class UserController {
     UserService userService;
 
