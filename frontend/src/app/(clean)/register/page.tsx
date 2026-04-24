@@ -138,8 +138,8 @@ const RegisterPage = () => {
       <Card className="w-full max-w-md border rounded-xl pt-6 bg-background">
         <CardHeader className="text-center">
           <div className="flex justify-center mb-4">
-            <div className="p-3 bg-indigo-100 dark:bg-indigo-900 rounded-2xl">
-              <BookOpen className="size-8 text-indigo-600 dark:text-indigo-400" />
+            <div className="p-3 bg-indigo-100 rounded-2xl">
+              <BookOpen className="size-8 text-indigo-600" />
             </div>
           </div>
           <CardTitle className="text-2xl">Create your account</CardTitle>
@@ -178,7 +178,7 @@ const RegisterPage = () => {
             />
             {password.length > 0 && (
               <div className="space-y-1.5 pt-1">
-                <div className="h-1.5 w-full bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                <div className="h-1.5 w-full bg-gray-200 rounded-full overflow-hidden">
                   <div
                     className={`h-full rounded-full transition-all duration-300 ${strength.bgColor}`}
                     style={{ width: strength.width }}
@@ -203,17 +203,12 @@ const RegisterPage = () => {
               {loading ? "Creating account..." : "Create Account"}
             </button>
             {formError ? (
-              <p className="text-sm text-red-600 dark:text-red-400 mt-2">
-                {formError}
-              </p>
+              <p className="text-sm text-red-600 mt-2">{formError}</p>
             ) : null}
           </form>
-          <div className="mt-4 text-center text-sm text-gray-600 dark:text-gray-400">
+          <div className="mt-4 text-center text-sm text-gray-600">
             Already have an account?{" "}
-            <Link
-              href="/login"
-              className="text-indigo-600 dark:text-indigo-400 hover:underline"
-            >
+            <Link href="/login" className="text-indigo-600 hover:underline">
               Sign in
             </Link>
           </div>

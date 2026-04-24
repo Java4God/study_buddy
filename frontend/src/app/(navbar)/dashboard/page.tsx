@@ -51,9 +51,7 @@ export default function DashboardPage() {
     <div className="space-y-6 py-8 px-20">
       <div>
         <h1 className="text-3xl mb-2">Welcome back!</h1>
-        <p className="text-gray-600 dark:text-gray-400">
-          Here is your study overview for today
-        </p>
+        <p className="text-gray-600">Here is your study overview for today</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -63,9 +61,7 @@ export default function DashboardPage() {
               <CardContent className="p-6 ">
                 <div className="flex items-center justify-between gap-3">
                   <div>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">
-                      {key}
-                    </p>
+                    <p className="text-sm text-gray-600">{key}</p>
                     <p className="text-3xl mt-1">{value}</p>
                   </div>
                   <div
@@ -129,9 +125,7 @@ export default function DashboardPage() {
               {weeklyProgress.map((day) => (
                 <div key={day.day} className="space-y-2">
                   <div className="flex items-center justify-between text-sm">
-                    <span className="text-gray-600 dark:text-gray-400">
-                      {day.day}
-                    </span>
+                    <span className="text-gray-600">{day.day}</span>
                     <span>{day.hours}h</span>
                   </div>
                   {/*<Progress value={(day.hours / maxHours) * 100} />*/}
@@ -152,11 +146,11 @@ export default function DashboardPage() {
               {upcomingExams.map((exam) => (
                 <div
                   key={exam.id}
-                  className="flex items-center justify-between p-3 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                  className="flex items-center justify-between p-3 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors"
                 >
                   <div>
                     <p className="font-medium">{exam.subject}</p>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                    <p className="text-sm text-gray-600">
                       {new Date(exam.date).toLocaleDateString("en-US", {
                         month: "short",
                         day: "numeric",
