@@ -14,6 +14,7 @@ import java.util.UUID;
 
 public interface UserService {
     Optional<UserDTO> getUserByEmail(String email);
+    Optional<UserDTO> getUserByUsername(String username);
     Optional<UserDTO> getUserById(UUID uuid);
     Page<UserDTO> getUsers(Pageable pageable);
     Optional<UserDTO> newUser(User user);

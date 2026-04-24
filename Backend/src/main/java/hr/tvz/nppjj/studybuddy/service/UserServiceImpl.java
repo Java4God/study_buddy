@@ -41,6 +41,13 @@ public class UserServiceImpl implements UserService{
     }
 
     @Override
+    public Optional<UserDTO> getUserByUsername(String username) {
+        User user = userRepository.findUserByUsername(username)
+                .orElseThrow(() -> new UserNotFoundException("No user with such a username"));
+        return Optional.of(toDTO(user));
+    }
+
+    @Override
     public Optional<UserDTO> getUserById(UUID uuid) {
         User user = userRepository.findUserById(uuid)
                 .orElseThrow(()-> new UserNotFoundException("No user with such an id"));
