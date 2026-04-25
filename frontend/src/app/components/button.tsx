@@ -32,9 +32,9 @@ const variants: Record<ButtonVariant, string> = {
     "bg-transparent text-stone-900 border-stone-900 hover:bg-stone-900 hover:text-stone-50 focus-visible:ring-stone-900",
   danger:
     "bg-red-600 text-white border-red-600 shadow-md hover:bg-red-700 hover:border-red-700 focus-visible:ring-red-500",
-  ghost: "hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50",
+  ghost: "hover:bg-accent hover:text-accent-foreground",
   outline:
-    "border bg-background text-foreground hover:bg-accent hover:text-accent-foreground dark:bg-input/30 dark:border-input dark:hover:bg-input/50",
+    "border bg-background text-foreground hover:bg-accent hover:text-accent-foreground",
 };
 
 const disabledClass = "opacity-45 cursor-not-allowed pointer-events-none";

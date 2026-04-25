@@ -44,12 +44,12 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex w-full items-center justify-center dark:from-gray-900 dark:via-gray-900 dark:to-gray-800 p-4 bg-switch-background/20">
+    <div className="min-h-screen flex w-full items-center justify-center p-4 bg-switch-background/20">
       <Card className="w-full max-w-md border rounded-xl pt-6 bg-background">
         <CardHeader className="text-center">
           <div className="flex justify-center mb-4">
-            <div className="p-3 bg-indigo-100 dark:bg-indigo-900 rounded-2xl">
-              <BookOpen className="size-8 text-indigo-600 dark:text-indigo-400" />
+            <div className="p-3 bg-indigo-100 rounded-2xl">
+              <BookOpen className="size-8 text-indigo-600" />
             </div>
           </div>
           <CardTitle className="text-2xl">Welcome to StudyBuddy</CardTitle>
@@ -83,12 +83,9 @@ export default function LoginPage() {
               {loading ? "Signing in..." : "Sign In"}
             </button>
           </form>
-          <div className="mt-4 text-center text-sm text-gray-600 dark:text-gray-400">
+          <div className="mt-4 text-center text-sm text-gray-600">
             Dont have an account?{" "}
-            <Link
-              href="/register"
-              className="text-indigo-600 dark:text-indigo-400 hover:underline"
-            >
+            <Link href="/register" className="text-indigo-600 hover:underline">
               Sign up
             </Link>
           </div>
