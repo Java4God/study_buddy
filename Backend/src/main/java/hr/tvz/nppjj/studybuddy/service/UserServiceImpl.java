@@ -5,7 +5,6 @@ import hr.tvz.nppjj.studybuddy.dto.UserDTO;
 import hr.tvz.nppjj.studybuddy.enumerators.Role;
 import hr.tvz.nppjj.studybuddy.exception.UserLoginException;
 import hr.tvz.nppjj.studybuddy.exception.UserNotFoundException;
-import hr.tvz.nppjj.studybuddy.model.CustomUserDetails;
 import hr.tvz.nppjj.studybuddy.model.User;
 import hr.tvz.nppjj.studybuddy.repository.UserRepository;
 import hr.tvz.nppjj.studybuddy.requests.UserAuthRequest;
@@ -56,19 +55,16 @@ public class UserServiceImpl implements UserService{
     public Optional<UserAuthResponse> authenticate(UserAuthRequest request) {
         authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
-                        request.getUsername(),
-                        request.getPassword()
+                        request.username(),
+                        request.password()
                 )
         );
         try{
-            User user = userRepository.findUserByUsername(request.getUsername())
+            User user = userRepository.findUserByUsername(request.username())
                     .orElseThrow(() -> new UserLoginException("Invalid username or password"));
             var jwtToken = jwtService.generateToken(user.getUsername());
             var refreshToken = jwtService.generateRefreshToken(user.getUsername());
-            return Optional.of(UserAuthResponse.builder()
-                    .accessToken(jwtToken)
-                    .refreshToken(refreshToken)
-                    .build());
+            return Optional.of(new UserAuthResponse(jwtToken, refreshToken));
         }catch (UserLoginException u){
             return Optional.empty();
         }
@@ -110,18 +106,10 @@ public class UserServiceImpl implements UserService{
     @Transactional
     public UserAuthResponse refreshToken(String refreshToken) {
         String username = jwtService.extractUsername(refreshToken);
-        User user = userRepository.findUserByUsername(username).orElseThrow(()-> new UserNotFoundException("User not found"));
         UserDetails userDetails = userDetailsService.loadUserByUsername(username);
         if(jwtService.isTokenValid(refreshToken, userDetails)){
             var jwt = jwtService.generateToken(username);
-
-            UserAuthResponse userAuthResponse = new UserAuthResponse();
-
-            userAuthResponse.setAccessToken(jwt);
-            userAuthResponse.setRefreshToken(refreshToken);
-
-            return  userAuthResponse;
-
+            return new UserAuthResponse(jwt, refreshToken);
         }
         return null;
     }
