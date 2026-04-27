@@ -41,7 +41,14 @@ export async function POST(req: Request) {
     cookieStore.set("auth_token", access_token ?? "", {
       httpOnly: true,
       sameSite: "lax",
-      maxAge: 60 * 60,
+      maxAge: 60,
+      secure: process.env.NODE_ENV === "production",
+      path: "/",
+    });
+    cookieStore.set("refresh_token", refresh_token ?? "", {
+      httpOnly: true,
+      sameSite: "lax",
+      maxAge: 60 * 60 * 24 * 30, // 30 days
       secure: process.env.NODE_ENV === "production",
       path: "/",
     });
