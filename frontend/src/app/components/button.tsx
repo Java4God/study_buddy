@@ -12,7 +12,7 @@ type ButtonVariant =
 
 interface ButtonProps {
   label?: string;
-  onClick: () => void;
+  onClick?: () => void;
   variant?: ButtonVariant;
   disabled?: boolean;
   style?: CSSProperties;

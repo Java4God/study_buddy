@@ -7,6 +7,10 @@ export async function POST() {
     maxAge: 0,
     path: "/",
   });
+  cookieStore.set("refresh_token", "", {
+    maxAge: 0,
+    path: "/",
+  });
 
   return new Response(JSON.stringify({ success: true }), {
     status: 200,

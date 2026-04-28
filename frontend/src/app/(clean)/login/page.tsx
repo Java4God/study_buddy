@@ -1,4 +1,5 @@
 "use client";
+import Button from "@/app/components/button";
 import {
   Card,
   CardContent,
@@ -79,9 +80,11 @@ export default function LoginPage() {
               type="password"
               error={error}
             />
-            <button type="submit" className="w-full" disabled={loading}>
-              {loading ? "Signing in..." : "Sign In"}
-            </button>
+            <div className="flex ">
+              <Button type="submit" disabled={loading} className="mx-auto">
+                {loading ? "Signing in..." : "Sign In"}
+              </Button>
+            </div>
           </form>
           <div className="mt-4 text-center text-sm text-gray-600">
             Dont have an account?{" "}

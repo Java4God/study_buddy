@@ -12,6 +12,7 @@ const restrictedPages = [
 ];
 export async function proxy(request: NextRequest) {
   const token = request.cookies.get("auth_token")?.value;
+  const refreshToken = request.cookies.get("refresh_token")?.value;
 
   const { pathname } = request.nextUrl;
 
@@ -20,11 +21,29 @@ export async function proxy(request: NextRequest) {
     pathname.startsWith(page),
   );
 
-  if (isRestrictedPage && !token) {
+  let hasValidToken = Boolean(token);
+
+  if (!hasValidToken && refreshToken) {
+    try {
+      const refreshUrl = new URL("/api/auth/refresh", request.url);
+      const refreshResponse = await fetch(refreshUrl, {
+        method: "POST",
+        headers: {
+          cookie: request.headers.get("cookie") ?? "",
+        },
+      });
+
+      hasValidToken = refreshResponse.ok;
+    } catch (error) {
+      console.error("Token refresh failed:", error);
+    }
+  }
+
+  if (isRestrictedPage && !hasValidToken) {
     return NextResponse.redirect(new URL("/login", request.url));
   }
 
-  if (isLoginPage && token) {
+  if (isLoginPage && hasValidToken) {
     return NextResponse.redirect(new URL("/dashboard", request.url));
   }
 
