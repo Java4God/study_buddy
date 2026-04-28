@@ -36,8 +36,9 @@ const Navbar = () => {
       <nav className="flex-1 px-3">
         {navItems.map((item) => {
           const isActive = false;
+          const isProfilePage = item.path === "/profile";
           return (
-            <Link key={item.path} href={item.path}>
+            <Link key={item.path} href={item.path + (isProfilePage ? "" : "")}>
               <div
                 className={`flex items-center gap-3 px-3 py-2.5 rounded-lg mb-1 transition-colors ${
                   isActive

@@ -1,6 +1,9 @@
 package hr.tvz.nppjj.studybuddy.controller;
 
+import hr.tvz.nppjj.studybuddy.config.JwtService;
+import hr.tvz.nppjj.studybuddy.dto.PomodoroSessionDTO;
 import hr.tvz.nppjj.studybuddy.dto.UserDTO;
+import hr.tvz.nppjj.studybuddy.exception.InvalidTokenException;
 import hr.tvz.nppjj.studybuddy.model.User;
 import hr.tvz.nppjj.studybuddy.requests.RefreshTokenRequest;
 import hr.tvz.nppjj.studybuddy.requests.UserAuthRequest;
@@ -14,6 +17,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -22,10 +26,26 @@ import java.util.UUID;
 @CrossOrigin(origins = "http://localhost:3000")
 public class UserController {
     UserService userService;
+    private final JwtService jwtService;
 
     @GetMapping("user/{email}")
     ResponseEntity<UserDTO> getUserByEmail(@PathVariable String email){
         return userService.getUserByEmail(email).map(user -> ResponseEntity.status(HttpStatus.FOUND).body(user))
+                .orElseGet(() -> ResponseEntity.notFound().build());
+    }
+
+    @GetMapping("user/{id}")
+    ResponseEntity<UserDTO> getUserById(@PathVariable String id){
+        return userService.getUserById(UUID.fromString(id)).map(user -> ResponseEntity.status(HttpStatus.FOUND).body(user))
+                .orElseGet(() -> ResponseEntity.notFound().build());
+    }
+
+    @PostMapping("user/by-token")
+    public ResponseEntity<UserDTO> getByToken(
+            @Valid @RequestBody PomodoroSessionController.PomodoroTokenRequest request
+    ) {
+        UUID userId = resolveUserIdFromToken(request.token());
+        return userService.getUserById(userId).map(user -> ResponseEntity.status(HttpStatus.FOUND).body(user))
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
@@ -66,5 +86,26 @@ public class UserController {
             return ResponseEntity.status(HttpStatus.OK).body("User with id: " + id + ", was successfully deleted");
         }
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body("No such user with id: " + id);
+    }
+
+    private UUID resolveUserIdFromToken(String token) {
+        if (token == null || token.isBlank()) {
+            throw new InvalidTokenException("Token is required");
+        }
+
+        try {
+            String username = jwtService.extractUsername(token);
+            if (username == null || username.isBlank()) {
+                throw new InvalidTokenException("Invalid token");
+            }
+
+            return userService.getUserByUsername(username)
+                    .map(user -> user.uuid())
+                    .orElseThrow(() -> new InvalidTokenException("User not found for token"));
+        } catch (InvalidTokenException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new InvalidTokenException("Invalid token");
+        }
     }
 }
