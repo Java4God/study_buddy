@@ -4,6 +4,7 @@ import hr.tvz.nppjj.studybuddy.config.JwtService;
 import hr.tvz.nppjj.studybuddy.dto.PomodoroSessionDTO;
 import hr.tvz.nppjj.studybuddy.dto.UserDTO;
 import hr.tvz.nppjj.studybuddy.exception.InvalidTokenException;
+import hr.tvz.nppjj.studybuddy.exception.UserLoginException;
 import hr.tvz.nppjj.studybuddy.model.User;
 import hr.tvz.nppjj.studybuddy.requests.RefreshTokenRequest;
 import hr.tvz.nppjj.studybuddy.requests.UserAuthRequest;
@@ -18,6 +19,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @RestController
@@ -62,9 +64,22 @@ public class UserController {
     }
 
     @PostMapping("register-user")
-    ResponseEntity<UserDTO> newUser(@Valid @RequestBody User user){
-        return userService.newUser(user).map(u -> ResponseEntity.status(HttpStatus.OK).body(u))
-                .orElseGet(()-> ResponseEntity.badRequest().build());
+    ResponseEntity<UserAuthResponse> newUser(@Valid @RequestBody User user){
+        try{
+            UserAuthRequest userAuthRequest = new UserAuthRequest(user.getUsername(), user.getPassword());
+            Optional<UserDTO> userDTOOptional = userService.newUser(user);
+            if(userDTOOptional.isPresent())
+            {
+                return userService.authenticate(userAuthRequest).map(u -> ResponseEntity.status(HttpStatus.OK).body(u))
+                    .orElseGet(()-> ResponseEntity.badRequest().build());
+            }
+            else throw new UserLoginException("Something went wrong");
+        } catch (UserLoginException u)
+        {
+            //TODO: logirati exception????
+            return ResponseEntity.badRequest().build();
+        }
+
     }
 
     @PostMapping("refresh")

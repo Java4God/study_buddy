@@ -5,30 +5,26 @@ import { USERS } from "@/app/consts";
 
 const API_DOMAIN = process.env.API_DOMAIN ?? "";
 
-interface LoginRequestBody {
-  username: string;
-  password: string;
-}
-
-interface ExternalApiResponse {
+interface RefreshApiResponse {
   access_token: string;
-  refresh_token: string;
+  refresh_token?: string;
 }
 
-export async function POST(req: Request) {
-  const { username, password }: LoginRequestBody = await req.json();
+export async function POST() {
+  const cookieStore = await cookies();
+  const refreshToken = cookieStore.get("refresh_token")?.value;
 
-  if (!username || !password) {
+  if (!refreshToken) {
     return NextResponse.json(
-      { message: "Missing required fields: username, password" },
-      { status: 400 },
+      { message: "No refresh token provided" },
+      { status: 401 },
     );
   }
 
   try {
-    const { data } = await axios.post<ExternalApiResponse>(
-      `${API_DOMAIN}${USERS}login`,
-      { username, password },
+    const { data } = await axios.post<RefreshApiResponse>(
+      `${API_DOMAIN}${USERS}refresh`,
+      { refreshToken },
       {
         headers: { "Content-Type": "application/json" },
         timeout: 10_000,
@@ -37,21 +33,23 @@ export async function POST(req: Request) {
 
     const { access_token, refresh_token } = data;
 
-    const cookieStore = await cookies();
     cookieStore.set("auth_token", access_token, {
       httpOnly: true,
       sameSite: "lax",
-      maxAge: 60,
+      maxAge: 60, // 1 minute
       secure: process.env.NODE_ENV === "production",
       path: "/",
     });
-    cookieStore.set("refresh_token", refresh_token ?? "", {
-      httpOnly: true,
-      sameSite: "lax",
-      maxAge: 60 * 60 * 24 * 30, // 30 days
-      secure: process.env.NODE_ENV === "production",
-      path: "/",
-    });
+
+    if (refresh_token) {
+      cookieStore.set("refresh_token", refresh_token, {
+        httpOnly: true,
+        sameSite: "lax",
+        maxAge: 60 * 60 * 24 * 30, // 30 days
+        secure: process.env.NODE_ENV === "production",
+        path: "/",
+      });
+    }
 
     return new Response(JSON.stringify({ success: true }), {
       status: 200,
@@ -59,7 +57,8 @@ export async function POST(req: Request) {
   } catch (error) {
     if (axios.isAxiosError(error)) {
       const status = error.response?.status ?? 500;
-      const message = error.response?.data?.message ?? "External API error";
+      const message =
+        error.response?.data?.message ?? "Failed to refresh token";
 
       return NextResponse.json({ message }, { status });
     }

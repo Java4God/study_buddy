@@ -17,6 +17,7 @@ import {
   validateUsername,
 } from "@/app/functions";
 import { BookOpen } from "lucide-react";
+import Button from "@/app/components/button";
 
 function getPasswordStrength(password: string): {
   label: string;
@@ -199,9 +200,11 @@ const RegisterPage = () => {
               required
               error={repeatPasswordError}
             />
-            <button type="submit" className="w-full" disabled={loading}>
-              {loading ? "Creating account..." : "Create Account"}
-            </button>
+            <div className="flex">
+              <Button type="submit" className="mx-auto" disabled={loading}>
+                {loading ? "Creating account..." : "Create Account"}
+              </Button>
+            </div>
             {formError ? (
               <p className="text-sm text-red-600 mt-2">{formError}</p>
             ) : null}
