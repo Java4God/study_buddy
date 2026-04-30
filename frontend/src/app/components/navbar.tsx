@@ -11,7 +11,7 @@ const navItems = [
   { path: "/flashcards", label: "Flashcards" },
   { path: "/exams", label: "Exams" },
   { path: "/ai-assistant", label: "AI Assistant" },
-  { path: "/profile", label: "Profile" },
+  { path: "/profile/me", label: "Profile" },
 ];
 
 const Navbar = () => {
