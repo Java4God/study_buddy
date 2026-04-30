@@ -7,6 +7,7 @@ import hr.tvz.nppjj.studybuddy.exception.UserLoginException;
 import hr.tvz.nppjj.studybuddy.exception.UserNotFoundException;
 import hr.tvz.nppjj.studybuddy.model.User;
 import hr.tvz.nppjj.studybuddy.repository.UserRepository;
+import hr.tvz.nppjj.studybuddy.requests.UpdateUserRequest;
 import hr.tvz.nppjj.studybuddy.requests.UserAuthRequest;
 import hr.tvz.nppjj.studybuddy.responses.UserAuthResponse;
 import lombok.AllArgsConstructor;
@@ -88,19 +89,19 @@ public class UserServiceImpl implements UserService{
 
     @Override
     @Transactional
-    public Optional<UserDTO> updateUser(UUID uuid, User user) {
+    public Optional<UserDTO> updateUser(UUID uuid, UpdateUserRequest user) {
         try{
             userRepository.findUserById(uuid).map(u->{
                 u.setId(uuid);
-                u.setPassword(user.getPassword());
                 u.setUsername(user.getUsername());
+                u.setEmail(user.getEmail());
                 return userRepository.save(u);
             }).orElseThrow(() -> new UserNotFoundException("User not found!"));
-            user.setId(uuid);
+            //user.setId(uuid);
         }catch (UserNotFoundException e){
             return Optional.empty();
         }
-        return Optional.of(toDTO(user));
+        return Optional.of(toDTO(user, uuid));
     }
 
     @Override
@@ -124,6 +125,14 @@ public class UserServiceImpl implements UserService{
     private UserDTO toDTO(User user){
         return new UserDTO(
                 user.getId(),
+                user.getUsername(),
+                user.getEmail()
+        );
+    }
+
+    private UserDTO toDTO(UpdateUserRequest user, UUID id){
+        return new UserDTO(
+                id,
                 user.getUsername(),
                 user.getEmail()
         );

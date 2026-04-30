@@ -3,6 +3,7 @@ package hr.tvz.nppjj.studybuddy.controller;
 import java.util.Optional;
 import java.util.UUID;
 
+import hr.tvz.nppjj.studybuddy.requests.UpdateUserRequest;
 import hr.tvz.nppjj.studybuddy.utils.TokenUserResolver;
 import io.jsonwebtoken.Jwt;
 import jakarta.validation.constraints.NotBlank;
@@ -92,8 +93,8 @@ public class UserController {
     }
 
     @PutMapping("update-user/{id}")
-    ResponseEntity<UserDTO> updateUser(@Valid @RequestBody User user, @PathVariable String id){
-        return userService.updateUser(UUID.fromString(id), user).map(u -> ResponseEntity.status(HttpStatus.OK).body(u))
+    ResponseEntity<UserDTO> updateUser(@Valid @RequestBody UpdateUserRequest newUser, @PathVariable String id){
+        return userService.updateUser(UUID.fromString(id), newUser).map(u -> ResponseEntity.status(HttpStatus.OK).body(u))
                 .orElseGet(()-> ResponseEntity.notFound().build());
     }
 

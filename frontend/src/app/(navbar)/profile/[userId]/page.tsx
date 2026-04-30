@@ -75,7 +75,6 @@ export default function ProfilePage({ params }: ProfilePageProps) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  // Placeholder data
   const friends: Friend[] = [
     {
       id: "1",

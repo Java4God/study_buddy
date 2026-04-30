@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Badge,
   Users,
@@ -69,6 +69,12 @@ export default function ProfilePageMe() {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [isEditing, setIsEditing] = useState(false);
+  const [editUsername, setEditUsername] = useState("");
+  const [editEmail, setEditEmail] = useState("");
+  const [updateLoading, setUpdateLoading] = useState(false);
+  const [updateError, setUpdateError] = useState("");
+  const [updateSuccess, setUpdateSuccess] = useState(false);
 
   const friends: Friend[] = [
     {
@@ -209,6 +215,71 @@ export default function ProfilePageMe() {
     return () => controller.abort();
   }, []);
 
+  const handleEditClick = () => {
+    if (profile) {
+      setEditUsername(profile.username);
+      setEditEmail(profile.email);
+      setIsEditing(true);
+      setUpdateError("");
+      setUpdateSuccess(false);
+    }
+  };
+
+  const handleCancel = () => {
+    setIsEditing(false);
+    setUpdateError("");
+    setUpdateSuccess(false);
+  };
+
+  const handleUpdateProfile = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!profile?.uuid) {
+      setUpdateError("User ID not found. Please reload the page.");
+      return;
+    }
+
+    setUpdateLoading(true);
+    setUpdateError("");
+    setUpdateSuccess(false);
+
+    try {
+      const response = await fetch(`/api/profile/update`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: profile.uuid,
+          username: editUsername,
+          email: editEmail,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data?.message ?? "Could not update profile.");
+      }
+
+      setProfile({
+        uuid: profile.uuid,
+        username: data.username ?? editUsername,
+        email: data.email ?? editEmail,
+      });
+
+      setUpdateSuccess(true);
+      setIsEditing(false);
+      setTimeout(() => setUpdateSuccess(false), 3000);
+    } catch (updateError) {
+      setUpdateError(
+        updateError instanceof Error
+          ? updateError.message
+          : "Could not update profile.",
+      );
+    } finally {
+      setUpdateLoading(false);
+    }
+  };
+
   const initials = useMemo(
     () => getInitials(profile?.username ?? "", profile?.email ?? ""),
     [profile?.username, profile?.email],
@@ -256,26 +327,92 @@ export default function ProfilePageMe() {
 
       <Card>
         <CardContent className="p-6">
-          <div className="flex items-center gap-6">
-            <div className="flex h-24 w-24 items-center justify-center rounded-full bg-indigo-100 text-3xl font-semibold text-indigo-600">
-              {initials}
-            </div>
-            <div className="flex-1">
-              <h2 className="text-2xl mb-1">{profile.username}</h2>
-              <p className="text-gray-600 mb-3">{profile.email}</p>
-              <div className="flex gap-2">
-                <Badge className="gap-1">
-                  <Flame className="size-3" />
-                  {stats.currentStreak} day streak
-                </Badge>
-                <Badge className="gap-1">
-                  <Trophy className="size-3" />
-                  {achievements.filter((a) => a.earned).length} achievements
-                </Badge>
+          {!isEditing ? (
+            <div className="flex items-center gap-6">
+              <div className="flex h-24 w-24 items-center justify-center rounded-full bg-indigo-100 text-3xl font-semibold text-indigo-600">
+                {initials}
               </div>
+              <div className="flex-1">
+                <h2 className="text-2xl mb-1">{profile.username}</h2>
+                <p className="text-gray-600 mb-3">{profile.email}</p>
+                <div className="flex gap-2">
+                  <Badge className="gap-1">
+                    <Flame className="size-3" />
+                    {stats.currentStreak} day streak
+                  </Badge>
+                  <Badge className="gap-1">
+                    <Trophy className="size-3" />
+                    {achievements.filter((a) => a.earned).length} achievements
+                  </Badge>
+                </div>
+              </div>
+              <Button onClick={handleEditClick} variant="outline">
+                Edit Profile
+              </Button>
             </div>
-            <Button variant="outline">Edit Profile</Button>
-          </div>
+          ) : (
+            <form onSubmit={handleUpdateProfile} className="space-y-4">
+              <div className="flex h-24 w-24 items-center justify-center rounded-full bg-indigo-100 text-3xl font-semibold text-indigo-600">
+                {initials}
+              </div>
+
+              {updateError && (
+                <div className="rounded-lg bg-red-50 p-3 text-sm text-red-700">
+                  {updateError}
+                </div>
+              )}
+
+              {updateSuccess && (
+                <div className="rounded-lg bg-green-50 p-3 text-sm text-green-700">
+                  Profile updated successfully!
+                </div>
+              )}
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Username
+                </label>
+                <input
+                  type="text"
+                  value={editUsername}
+                  onChange={(e) => setEditUsername(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Email
+                </label>
+                <input
+                  type="email"
+                  value={editEmail}
+                  onChange={(e) => setEditEmail(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  required
+                />
+              </div>
+
+              <div className="flex gap-2 pt-2">
+                <Button
+                  type="submit"
+                  disabled={updateLoading}
+                  className="bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-50"
+                >
+                  {updateLoading ? "Saving..." : "Save Changes"}
+                </Button>
+                <Button
+                  type="button"
+                  onClick={handleCancel}
+                  disabled={updateLoading}
+                  variant="outline"
+                >
+                  Cancel
+                </Button>
+              </div>
+            </form>
+          )}
         </CardContent>
       </Card>
 
