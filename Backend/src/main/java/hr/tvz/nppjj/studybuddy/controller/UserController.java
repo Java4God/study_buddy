@@ -3,19 +3,15 @@ package hr.tvz.nppjj.studybuddy.controller;
 import java.util.Optional;
 import java.util.UUID;
 
+import hr.tvz.nppjj.studybuddy.utils.TokenUserResolver;
+import io.jsonwebtoken.Jwt;
+import jakarta.validation.constraints.NotBlank;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.*;
 
 import hr.tvz.nppjj.studybuddy.dto.UserDTO;
 import hr.tvz.nppjj.studybuddy.exception.UserLoginException;
@@ -33,10 +29,23 @@ import lombok.AllArgsConstructor;
 @CrossOrigin(origins = "http://localhost:3000")
 public class UserController {
     UserService userService;
+    private final TokenUserResolver tokenUserResolver;
 
     @GetMapping("user/{email}")
     ResponseEntity<UserDTO> getUserByEmail(@PathVariable String email){
         return userService.getUserByEmail(email).map(user -> ResponseEntity.status(HttpStatus.FOUND).body(user))
+                .orElseGet(() -> ResponseEntity.notFound().build());
+    }
+
+    @GetMapping("me")
+    ResponseEntity<UserDTO> getCurrentUser(@RequestHeader("Authorization") String authHeader){
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        String token = authHeader.substring(7);
+        UUID id = tokenUserResolver.resolveUserIdFromToken(token);
+
+        return userService.getUserById(id).map(user -> ResponseEntity.status(HttpStatus.OK).body(user))
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
@@ -96,5 +105,11 @@ public class UserController {
             return ResponseEntity.status(HttpStatus.OK).body("User with id: " + id + ", was successfully deleted");
         }
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body("No such user with id: " + id);
+    }
+
+    public record UserTokenRequest(
+            @NotBlank(message = "Token is required")
+            String token
+    ) {
     }
 }
