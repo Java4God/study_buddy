@@ -28,6 +28,7 @@ public class ApplicationConfig{
                         .requestMatchers("/users/login").permitAll()
                         .requestMatchers("/users/register-user").permitAll()
                         .requestMatchers("/users/refresh").permitAll()
+                        .requestMatchers("/users/user-by-id").authenticated()
                         .requestMatchers("/users").hasRole("ADMIN")
                         .requestMatchers("/users/**").authenticated()
                         .requestMatchers("/password-reset/**").permitAll()
