@@ -284,7 +284,6 @@ export default function ProfilePage({ params }: ProfilePageProps) {
                 </Badge>
               </div>
             </div>
-            <Button variant="outline">Edit Profile</Button>
           </div>
         </CardContent>
       </Card>

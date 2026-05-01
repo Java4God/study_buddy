@@ -70,7 +70,6 @@ export default function ProfilePageMe() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [isEditing, setIsEditing] = useState(false);
-  const [editUsername, setEditUsername] = useState("");
   const [editEmail, setEditEmail] = useState("");
   const [updateLoading, setUpdateLoading] = useState(false);
   const [updateError, setUpdateError] = useState("");
@@ -217,7 +216,6 @@ export default function ProfilePageMe() {
 
   const handleEditClick = () => {
     if (profile) {
-      setEditUsername(profile.username);
       setEditEmail(profile.email);
       setIsEditing(true);
       setUpdateError("");
@@ -249,7 +247,6 @@ export default function ProfilePageMe() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           id: profile.uuid,
-          username: editUsername,
           email: editEmail,
         }),
       });
@@ -262,7 +259,7 @@ export default function ProfilePageMe() {
 
       setProfile({
         uuid: profile.uuid,
-        username: data.username ?? editUsername,
+        username: data.username ?? profile.username,
         email: data.email ?? editEmail,
       });
 
@@ -370,19 +367,6 @@ export default function ProfilePageMe() {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Username
-                </label>
-                <input
-                  type="text"
-                  value={editUsername}
-                  onChange={(e) => setEditUsername(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
                   Email
                 </label>
                 <input
@@ -398,7 +382,7 @@ export default function ProfilePageMe() {
                 <Button
                   type="submit"
                   disabled={updateLoading}
-                  className="bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-50"
+                  className="bg-indigo-600 text-black hover:bg-indigo-700 disabled:opacity-50"
                 >
                   {updateLoading ? "Saving..." : "Save Changes"}
                 </Button>
