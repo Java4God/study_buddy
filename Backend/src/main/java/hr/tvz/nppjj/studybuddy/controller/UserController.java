@@ -56,7 +56,7 @@ public class UserController {
             else throw new UserLoginException("Something went wrong");
         } catch (UserLoginException u)
         {
-            //TODO: logirati exception????
+            //TODO: logirati exception?
             return ResponseEntity.badRequest().build();
         }
 
