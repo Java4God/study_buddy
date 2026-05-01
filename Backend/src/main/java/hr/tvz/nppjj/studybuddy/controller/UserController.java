@@ -4,14 +4,13 @@ import java.util.Optional;
 import java.util.UUID;
 
 import hr.tvz.nppjj.studybuddy.requests.UpdateUserRequest;
+import hr.tvz.nppjj.studybuddy.service.TokenBlacklistService;
 import hr.tvz.nppjj.studybuddy.utils.TokenUserResolver;
-import io.jsonwebtoken.Jwt;
 import jakarta.validation.constraints.NotBlank;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import hr.tvz.nppjj.studybuddy.dto.UserDTO;
@@ -31,6 +30,7 @@ import lombok.AllArgsConstructor;
 public class UserController {
     UserService userService;
     private final TokenUserResolver tokenUserResolver;
+    private final TokenBlacklistService tokenBlacklistService;
 
     @GetMapping("user/{email}")
     ResponseEntity<UserDTO> getUserByEmail(@PathVariable String email){
@@ -65,7 +65,6 @@ public class UserController {
     public ResponseEntity<UserAuthResponse> userLogin(@RequestBody UserAuthRequest userAuthRequest){
         return userService.authenticate(userAuthRequest).map(uar -> ResponseEntity.status(HttpStatus.OK).body(uar))
                 .orElseGet(() -> ResponseEntity.badRequest().build());
-        //return new ResponseEntity<>(userService.authenticate(userAuthRequest), HttpStatus.OK);
     }
 
     @PostMapping("register-user")
@@ -76,20 +75,31 @@ public class UserController {
             if(userDTOOptional.isPresent())
             {
                 return userService.authenticate(userAuthRequest).map(u -> ResponseEntity.status(HttpStatus.OK).body(u))
-                    .orElseGet(()-> ResponseEntity.badRequest().build());
+                        .orElseGet(()-> ResponseEntity.badRequest().build());
             }
             else throw new UserLoginException("Something went wrong");
         } catch (UserLoginException u)
         {
-            //TODO: logirati exception????
             return ResponseEntity.badRequest().build();
         }
-
     }
 
     @PostMapping("refresh")
     public ResponseEntity<UserAuthResponse> refreshToken(@RequestBody RefreshTokenRequest refreshToken){
         return new ResponseEntity<>(userService.refreshToken(refreshToken.refreshToken()), HttpStatus.OK);
+    }
+
+    @PostMapping("logout")
+    public ResponseEntity<Void> logout(@RequestHeader(value = "Authorization", required = false) String authHeader,
+                                       @RequestBody(required = false) RefreshTokenRequest refreshRequest){
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            String accessToken = authHeader.substring(7);
+            tokenBlacklistService.revoke(accessToken);
+        }
+        if (refreshRequest != null && refreshRequest.refreshToken() != null) {
+            tokenBlacklistService.revoke(refreshRequest.refreshToken());
+        }
+        return ResponseEntity.ok().build();
     }
 
     @PutMapping("update-user/{id}")

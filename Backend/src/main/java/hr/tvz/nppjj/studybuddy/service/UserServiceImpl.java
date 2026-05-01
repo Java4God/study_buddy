@@ -13,8 +13,10 @@ import hr.tvz.nppjj.studybuddy.responses.UserAuthResponse;
 import lombok.AllArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -33,6 +35,8 @@ public class UserServiceImpl implements UserService{
     UserDetailsService userDetailsService;
     private final BCryptPasswordEncoder encoder = new BCryptPasswordEncoder(12);
     private final AuthenticationManager authenticationManager;
+    private final TokenBlacklistService tokenBlacklistService;
+
     @Override
     public Optional<UserDTO> getUserByEmail(String email) {
         User user = userRepository.findUserByEmail(email)
@@ -76,7 +80,6 @@ public class UserServiceImpl implements UserService{
         }catch (UserLoginException u){
             return Optional.empty();
         }
-
     }
 
     @Override
@@ -89,19 +92,27 @@ public class UserServiceImpl implements UserService{
 
     @Override
     @Transactional
-    public Optional<UserDTO> updateUser(UUID uuid, UpdateUserRequest user) {
-        try{
-            userRepository.findUserById(uuid).map(u->{
-                u.setId(uuid);
-                u.setUsername(user.getUsername());
-                u.setEmail(user.getEmail());
-                return userRepository.save(u);
-            }).orElseThrow(() -> new UserNotFoundException("User not found!"));
-            //user.setId(uuid);
-        }catch (UserNotFoundException e){
-            return Optional.empty();
+    public Optional<UserDTO> updateUser(UUID uuid, UpdateUserRequest request) {
+        String currentUsername = SecurityContextHolder.getContext().getAuthentication().getName();
+        User currentUser = userRepository.findUserByUsername(currentUsername)
+                .orElseThrow(() -> new UserNotFoundException("Current user not found"));
+        boolean isAdmin = currentUser.getRole() != null
+                && currentUser.getRole().name().equals("ROLE_ADMIN");
+        if (!isAdmin && !currentUser.getId().equals(uuid)) {
+            throw new AccessDeniedException("You can only update your own profile");
         }
-        return Optional.of(toDTO(user, uuid));
+
+        return userRepository.findUserById(uuid)
+                .map(u -> {
+                    if (request.getUsername() != null && !request.getUsername().isBlank()) {
+                        u.setUsername(request.getUsername());
+                    }
+                    if (request.getEmail() != null && !request.getEmail().isBlank()) {
+                        u.setEmail(request.getEmail());
+                    }
+                    return userRepository.save(u);
+                })
+                .map(this::toDTO);
     }
 
     @Override
@@ -113,6 +124,9 @@ public class UserServiceImpl implements UserService{
     @Override
     @Transactional
     public UserAuthResponse refreshToken(String refreshToken) {
+        if (tokenBlacklistService.isRevoked(refreshToken)) {
+            return null;
+        }
         String username = jwtService.extractUsername(refreshToken);
         UserDetails userDetails = userDetailsService.loadUserByUsername(username);
         if(jwtService.isTokenValid(refreshToken, userDetails)){
@@ -125,14 +139,6 @@ public class UserServiceImpl implements UserService{
     private UserDTO toDTO(User user){
         return new UserDTO(
                 user.getId(),
-                user.getUsername(),
-                user.getEmail()
-        );
-    }
-
-    private UserDTO toDTO(UpdateUserRequest user, UUID id){
-        return new UserDTO(
-                id,
                 user.getUsername(),
                 user.getEmail()
         );
