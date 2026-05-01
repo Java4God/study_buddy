@@ -5,6 +5,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -17,6 +18,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @Configuration
 @RequiredArgsConstructor
 @EnableWebSecurity
+@EnableMethodSecurity
 public class ApplicationConfig{
     private final JwtAuthenticationFilter jwtAuthFilter;
 
@@ -28,12 +30,14 @@ public class ApplicationConfig{
                         .requestMatchers("/users/login").permitAll()
                         .requestMatchers("/users/register-user").permitAll()
                         .requestMatchers("/users/refresh").permitAll()
-                        .requestMatchers("/users").hasRole("ADMIN")
-                        .requestMatchers("/users/**").authenticated()
+                        .requestMatchers("/users/logout").permitAll()
                         .requestMatchers("/password-reset/**").permitAll()
-                        .requestMatchers("/exams/**").permitAll()
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html").permitAll()
-                        .requestMatchers("/pomodoro-sessions/**").permitAll()
+                        .requestMatchers("/users").hasRole("ADMIN")
+                        .requestMatchers("/admin/**").hasRole("ADMIN")
+                        .requestMatchers("/users/**").authenticated()
+                        .requestMatchers("/exams/**").authenticated()
+                        .requestMatchers("/pomodoro-sessions/**").authenticated()
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
@@ -52,4 +56,3 @@ public class ApplicationConfig{
         return config.getAuthenticationManager();
     }
 }
-
