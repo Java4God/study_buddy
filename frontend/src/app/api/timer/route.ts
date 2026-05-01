@@ -1,6 +1,7 @@
 import axios from "axios";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
+import { USERS } from "@/app/consts";
 
 const API_DOMAIN = process.env.API_DOMAIN ?? "";
 const POMODORO_SESSIONS = "pomodoro-sessions";
@@ -36,6 +37,75 @@ function extractMessage(data: unknown): string | undefined {
   return undefined;
 }
 
+async function refreshAccessToken() {
+  const cookieStore = await cookies();
+  const refreshToken = cookieStore.get("refresh_token")?.value;
+
+  if (!refreshToken) {
+    return null;
+  }
+
+  try {
+    const response = await axios.post(
+      `${API_DOMAIN}${USERS}refresh`,
+      { refreshToken },
+      {
+        headers: { "Content-Type": "application/json" },
+        timeout: 10_000,
+        validateStatus: () => true,
+      },
+    );
+
+    if (response.status < 200 || response.status >= 400) {
+      return null;
+    }
+
+    const accessToken = response.data?.access_token;
+    const nextRefreshToken = response.data?.refresh_token;
+
+    if (typeof accessToken !== "string" || !accessToken) {
+      return null;
+    }
+
+    cookieStore.set("auth_token", accessToken, {
+      httpOnly: true,
+      sameSite: "lax",
+      maxAge: 60,
+      secure: process.env.NODE_ENV === "production",
+      path: "/",
+    });
+
+    if (typeof nextRefreshToken === "string" && nextRefreshToken) {
+      cookieStore.set("refresh_token", nextRefreshToken, {
+        httpOnly: true,
+        sameSite: "lax",
+        maxAge: 60 * 60 * 24 * 30,
+        secure: process.env.NODE_ENV === "production",
+        path: "/",
+      });
+    }
+
+    return accessToken;
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      return null;
+    }
+
+    return null;
+  }
+}
+
+async function getAuthorizedToken() {
+  const cookieStore = await cookies();
+  let accessToken = cookieStore.get("auth_token")?.value ?? null;
+
+  if (!accessToken) {
+    accessToken = await refreshAccessToken();
+  }
+
+  return accessToken;
+}
+
 function isPomodoroRequestBody(
   payload: unknown,
 ): payload is PomodoroRequestBody {
@@ -57,22 +127,52 @@ function isPomodoroRequestBody(
   );
 }
 export async function GET() {
-  const cookieStore = await cookies();
-  const token = cookieStore.get("auth_token")?.value;
+  let token = await getAuthorizedToken();
 
   if (!token) {
     return jsonError("Unauthorized", 401);
   }
 
   try {
-    const response = await axios.post(
+    let response = await axios.post(
       `${API_DOMAIN}${POMODORO_SESSIONS}/by-token`,
       { token },
       {
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
         timeout: 10_000,
+        validateStatus: () => true,
       },
     );
+
+    if (response.status === 401 || response.status === 403) {
+      token = await refreshAccessToken();
+      if (!token) {
+        return jsonError("Unauthorized", 401);
+      }
+
+      response = await axios.post(
+        `${API_DOMAIN}${POMODORO_SESSIONS}/by-token`,
+        { token },
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          timeout: 10_000,
+          validateStatus: () => true,
+        },
+      );
+    }
+
+    if (response.status < 200 || response.status >= 400) {
+      return jsonError(
+        extractMessage(response.data) ?? "External API error",
+        response.status,
+      );
+    }
 
     return NextResponse.json(response.data, { status: response.status });
   } catch (error) {
@@ -94,15 +194,14 @@ export async function POST(req: Request) {
     return jsonError("Invalid pomodoro payload", 400);
   }
 
-  const cookieStore = await cookies();
-  const token = cookieStore.get("auth_token")?.value;
+  let token = await getAuthorizedToken();
 
   if (!token) {
     return jsonError("Unauthorized", 401);
   }
 
   try {
-    const response = await axios.post(
+    let response = await axios.post(
       `${API_DOMAIN}${POMODORO_SESSIONS}/by-token/create`,
       {
         token,
@@ -112,10 +211,47 @@ export async function POST(req: Request) {
         completed: payload.completed ?? true,
       },
       {
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
         timeout: 10_000,
+        validateStatus: () => true,
       },
     );
+
+    if (response.status === 401 || response.status === 403) {
+      token = await refreshAccessToken();
+      if (!token) {
+        return jsonError("Unauthorized", 401);
+      }
+
+      response = await axios.post(
+        `${API_DOMAIN}${POMODORO_SESSIONS}/by-token/create`,
+        {
+          token,
+          mode: payload.mode,
+          durationMinutes: payload.durationMinutes,
+          subject: payload.subject ?? null,
+          completed: payload.completed ?? true,
+        },
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          timeout: 10_000,
+          validateStatus: () => true,
+        },
+      );
+    }
+
+    if (response.status < 200 || response.status >= 400) {
+      return jsonError(
+        extractMessage(response.data) ?? "External API error",
+        response.status,
+      );
+    }
 
     return NextResponse.json(response.data, { status: response.status });
   } catch (error) {
