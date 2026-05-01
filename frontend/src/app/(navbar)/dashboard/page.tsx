@@ -48,7 +48,7 @@ export default function DashboardPage() {
   ];
 
   return (
-    <div className="space-y-6 py-8 px-20">
+    <div className="space-y-6 py-8 px-20 bg-switch-background/20">
       <div>
         <h1 className="text-3xl mb-2">Welcome back!</h1>
         <p className="text-gray-600">Here is your study overview for today</p>
