@@ -41,13 +41,13 @@ public class JwtService {
         return Jwts.builder()
                 .subject(username)
                 .issuedAt(new Date())
-                .expiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60))
+                .expiration(new Date(System.currentTimeMillis() + 1000 * 60))
                 .signWith(getSigningKey())
                 .compact();
     }
 
     public String generateRefreshToken(String username) {
-        long refreshExpiration = 900000;
+        long refreshExpiration = 28800000;
         return Jwts.builder()
                 .subject(username)
                 .issuedAt(new Date(System.currentTimeMillis()))
