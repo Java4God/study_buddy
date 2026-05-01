@@ -11,7 +11,7 @@ const navItems = [
   { path: "/flashcards", label: "Flashcards" },
   { path: "/exams", label: "Exams" },
   { path: "/ai-assistant", label: "AI Assistant" },
-  { path: "/profile", label: "Profile" },
+  { path: "/profile/me", label: "Profile" },
 ];
 
 const Navbar = () => {
@@ -23,7 +23,7 @@ const Navbar = () => {
   };
 
   return (
-    <aside className="w-64 bg-white border-r border-gray-200 flex flex-col h-screen sticky top-0">
+    <aside className="max-w-2xs w-full bg-white border-r border-gray-200 flex flex-col h-screen sticky top-0">
       <div className="p-6">
         <div className="flex items-center gap-3">
           <div className="p-2 bg-indigo-100 rounded-xl">
