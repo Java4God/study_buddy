@@ -8,6 +8,8 @@ import hr.tvz.nppjj.studybuddy.model.User;
 import hr.tvz.nppjj.studybuddy.repository.PomodoroSessionRepository;
 import hr.tvz.nppjj.studybuddy.repository.UserRepository;
 import lombok.AllArgsConstructor;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -25,25 +27,40 @@ public class PomodoroSessionServiceImpl implements PomodoroSessionService {
 
     @Override
     public List<PomodoroSessionDTO> getAllSessions() {
-        return repository.findAll().stream().map(this::toDTO).toList();
+        User currentUser = getCurrentUser();
+        if (isAdmin(currentUser)) {
+            return repository.findAll().stream().map(this::toDTO).toList();
+        }
+        return repository.findAllByUserIdOrderByCompletedAtDesc(currentUser.getId())
+                .stream().map(this::toDTO).toList();
     }
 
     @Override
     public List<PomodoroSessionDTO> getSessionsByUserId(UUID userId) {
+        User currentUser = getCurrentUser();
+        if (!isAdmin(currentUser) && !currentUser.getId().equals(userId)) {
+            throw new AccessDeniedException("You don't have permission to view these sessions");
+        }
         return repository.findAllByUserIdOrderByCompletedAtDesc(userId)
                 .stream().map(this::toDTO).toList();
     }
 
     @Override
     public PomodoroSessionDTO getSessionById(UUID id) {
-        return repository.findById(id)
-                .map(this::toDTO)
+        PomodoroSession session = repository.findById(id)
                 .orElseThrow(() -> new PomodoroSessionNotFoundException("Pomodoro session not found: " + id));
+        checkOwnership(session);
+        return toDTO(session);
     }
 
     @Override
     @Transactional
     public PomodoroSessionDTO createSession(PomodoroSessionDTO dto, UUID userId) {
+        User currentUser = getCurrentUser();
+        if (!isAdmin(currentUser) && !currentUser.getId().equals(userId)) {
+            throw new AccessDeniedException("You can only create sessions for yourself");
+        }
+
         User user = userRepository.findUserById(userId)
                 .orElseThrow(() -> new UserNotFoundException("User not found: " + userId));
 
@@ -63,6 +80,7 @@ public class PomodoroSessionServiceImpl implements PomodoroSessionService {
     public PomodoroSessionDTO updateSession(UUID id, PomodoroSessionDTO dto) {
         PomodoroSession session = repository.findById(id)
                 .orElseThrow(() -> new PomodoroSessionNotFoundException("Pomodoro session not found: " + id));
+        checkOwnership(session);
 
         session.setMode(dto.mode());
         session.setDurationMinutes(dto.durationMinutes());
@@ -76,10 +94,27 @@ public class PomodoroSessionServiceImpl implements PomodoroSessionService {
     @Override
     @Transactional
     public void deleteSession(UUID id) {
-        if (!repository.existsById(id)) {
-            throw new PomodoroSessionNotFoundException("Pomodoro session not found: " + id);
-        }
+        PomodoroSession session = repository.findById(id)
+                .orElseThrow(() -> new PomodoroSessionNotFoundException("Pomodoro session not found: " + id));
+        checkOwnership(session);
         repository.deleteById(id);
+    }
+
+    private User getCurrentUser() {
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        return userRepository.findUserByUsername(username)
+                .orElseThrow(() -> new UserNotFoundException("Current user not found"));
+    }
+
+    private boolean isAdmin(User user) {
+        return user.getRole() != null && user.getRole().name().equals("ROLE_ADMIN");
+    }
+
+    private void checkOwnership(PomodoroSession session) {
+        User currentUser = getCurrentUser();
+        if (!isAdmin(currentUser) && !session.getUser().getId().equals(currentUser.getId())) {
+            throw new AccessDeniedException("You don't have permission to access this session");
+        }
     }
 
     private PomodoroSessionDTO toDTO(PomodoroSession session) {
