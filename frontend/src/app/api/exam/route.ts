@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import axios from "axios";
-import { cookies } from "next/headers";
+import { getAuthorizedToken, refreshAccessToken } from "@/app/lib/auth";
 
 const API_DOMAIN = process.env.API_DOMAIN ?? "";
 const EXAMS = "exams";
@@ -14,54 +14,6 @@ function extractMessage(data: unknown): string | undefined {
   const message = (data as { message?: unknown }).message;
   if (typeof message === "string") return message;
   return undefined;
-}
-
-async function refreshAccessToken() {
-  const cookieStore = await cookies();
-  const refreshToken = cookieStore.get("refresh_token")?.value;
-
-  if (!refreshToken) return null;
-
-  try {
-    const response = await axios.post(
-      `${API_DOMAIN}users/refresh`,
-      { refreshToken },
-      {
-        headers: { "Content-Type": "application/json" },
-        timeout: 10_000,
-        validateStatus: () => true,
-      },
-    );
-
-    if (response.status < 200 || response.status >= 400) return null;
-
-    const accessToken = response.data?.access_token;
-    const nextRefreshToken = response.data?.refresh_token;
-
-    if (typeof accessToken !== "string" || !accessToken) return null;
-
-    cookieStore.set("auth_token", accessToken, {
-      httpOnly: true,
-      sameSite: "lax",
-      maxAge: 60,
-      secure: process.env.NODE_ENV === "production",
-      path: "/",
-    });
-
-    if (typeof nextRefreshToken === "string" && nextRefreshToken) {
-      cookieStore.set("refresh_token", nextRefreshToken, {
-        httpOnly: true,
-        sameSite: "lax",
-        maxAge: 60 * 60 * 24 * 30,
-        secure: process.env.NODE_ENV === "production",
-        path: "/",
-      });
-    }
-
-    return accessToken;
-  } catch (error) {
-    return null;
-  }
 }
 
 async function callExternal(
@@ -88,13 +40,8 @@ async function callExternal(
 }
 
 export async function GET() {
-  const cookieStore = await cookies();
-  let accessToken = cookieStore.get("auth_token")?.value ?? null;
-
-  if (!accessToken) {
-    accessToken = await refreshAccessToken();
-    if (!accessToken) return jsonError("Unauthorized", 401);
-  }
+  let accessToken = await getAuthorizedToken();
+  if (!accessToken) return jsonError("Unauthorized", 401);
 
   try {
     let response = await callExternal(
@@ -129,13 +76,8 @@ export async function GET() {
 
 export async function POST(req: Request) {
   const payload = await req.json();
-  const cookieStore = await cookies();
-  let accessToken = cookieStore.get("auth_token")?.value ?? null;
-
-  if (!accessToken) {
-    accessToken = await refreshAccessToken();
-    if (!accessToken) return jsonError("Unauthorized", 401);
-  }
+  let accessToken = await getAuthorizedToken();
+  if (!accessToken) return jsonError("Unauthorized", 401);
 
   try {
     let response = await callExternal(
@@ -177,13 +119,8 @@ export async function PUT(req: Request) {
   }
 
   const payload = await req.json();
-  const cookieStore = await cookies();
-  let accessToken = cookieStore.get("auth_token")?.value ?? null;
-
-  if (!accessToken) {
-    accessToken = await refreshAccessToken();
-    if (!accessToken) return jsonError("Unauthorized", 401);
-  }
+  let accessToken = await getAuthorizedToken();
+  if (!accessToken) return jsonError("Unauthorized", 401);
 
   try {
     let response = await callExternal(
@@ -224,13 +161,8 @@ export async function DELETE(req: Request) {
     return jsonError("Missing exam id", 400);
   }
 
-  const cookieStore = await cookies();
-  let accessToken = cookieStore.get("auth_token")?.value ?? null;
-
-  if (!accessToken) {
-    accessToken = await refreshAccessToken();
-    if (!accessToken) return jsonError("Unauthorized", 401);
-  }
+  let accessToken = await getAuthorizedToken();
+  if (!accessToken) return jsonError("Unauthorized", 401);
 
   try {
     let response = await callExternal(
