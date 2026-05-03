@@ -1,16 +1,26 @@
 package hr.tvz.nppjj.studybuddy.controller;
 
-import hr.tvz.nppjj.studybuddy.dto.ExamScheduleDTO;
-import hr.tvz.nppjj.studybuddy.service.ExamScheduleService;
-import jakarta.validation.Valid;
-import lombok.AllArgsConstructor;
+import java.util.List;
+import java.util.UUID;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
-import java.util.UUID;
+import hr.tvz.nppjj.studybuddy.dto.ExamScheduleDTO;
+import hr.tvz.nppjj.studybuddy.service.ExamScheduleService;
+import jakarta.validation.Valid;
+import lombok.AllArgsConstructor;
 
 @RestController
 @RequestMapping("exams")
@@ -23,6 +33,11 @@ public class ExamScheduleController {
     @GetMapping
     public Page<ExamScheduleDTO> getAllExams(Pageable pageable) {
         return examScheduleService.getAllExams(pageable);
+    }
+
+    @GetMapping("/next")
+    public List<ExamScheduleDTO> getNextExams() {
+        return examScheduleService.getNextExams();
     }
 
     @GetMapping("/{id}")

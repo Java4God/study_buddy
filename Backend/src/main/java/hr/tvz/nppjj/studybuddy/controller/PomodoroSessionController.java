@@ -1,23 +1,30 @@
 package hr.tvz.nppjj.studybuddy.controller;
 
+import java.util.List;
+import java.util.UUID;
+
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
 import hr.tvz.nppjj.studybuddy.config.JwtService;
 import hr.tvz.nppjj.studybuddy.dto.PomodoroSessionDTO;
 import hr.tvz.nppjj.studybuddy.enumerators.PomodoroMode;
-import hr.tvz.nppjj.studybuddy.exception.InvalidTokenException;
 import hr.tvz.nppjj.studybuddy.service.PomodoroSessionService;
 import hr.tvz.nppjj.studybuddy.service.UserService;
 import hr.tvz.nppjj.studybuddy.utils.TokenUserResolver;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
-import java.util.UUID;
 
 @RestController
 @RequestMapping("/pomodoro-sessions")
@@ -89,6 +96,11 @@ public class PomodoroSessionController {
         );
 
         return ResponseEntity.status(HttpStatus.CREATED).body(service.createSession(dto, userId));
+    }
+
+    @GetMapping("/week")
+    public ResponseEntity<List<hr.tvz.nppjj.studybuddy.dto.WeeklyPomodoroDTO>> getWeekTotals() {
+        return ResponseEntity.ok(service.getWeeklyTotals());
     }
 
     public record PomodoroTokenRequest(

@@ -1,6 +1,21 @@
 package hr.tvz.nppjj.studybuddy.service;
 
+import java.time.DayOfWeek;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+import java.util.stream.Collectors;
+
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import hr.tvz.nppjj.studybuddy.dto.PomodoroSessionDTO;
+import hr.tvz.nppjj.studybuddy.dto.WeeklyPomodoroDTO;
 import hr.tvz.nppjj.studybuddy.exception.PomodoroSessionNotFoundException;
 import hr.tvz.nppjj.studybuddy.exception.UserNotFoundException;
 import hr.tvz.nppjj.studybuddy.model.PomodoroSession;
@@ -8,14 +23,6 @@ import hr.tvz.nppjj.studybuddy.model.User;
 import hr.tvz.nppjj.studybuddy.repository.PomodoroSessionRepository;
 import hr.tvz.nppjj.studybuddy.repository.UserRepository;
 import lombok.AllArgsConstructor;
-import org.springframework.security.access.AccessDeniedException;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.UUID;
 
 @Service
 @AllArgsConstructor
@@ -99,6 +106,31 @@ public class PomodoroSessionServiceImpl implements PomodoroSessionService {
         checkOwnership(session);
         repository.deleteById(id);
     }
+
+        @Override
+        public List<WeeklyPomodoroDTO> getWeeklyTotals() {
+        User currentUser = getCurrentUser();
+
+        // ISO week starting Monday
+        LocalDate today = LocalDate.now();
+        LocalDate monday = today.with(DayOfWeek.MONDAY);
+        LocalDate sunday = monday.plusDays(6);
+
+        LocalDateTime start = monday.atStartOfDay();
+        LocalDateTime end = sunday.atTime(LocalTime.MAX);
+
+        List<PomodoroSession> sessions = isAdmin(currentUser)
+            ? repository.findByUserIdAndCompletedAtBetween(currentUser.getId(), start, end)
+            : repository.findByUserIdAndCompletedAtBetween(currentUser.getId(), start, end);
+
+        Map<LocalDate, Integer> grouped = sessions.stream()
+            .collect(Collectors.groupingBy(s -> s.getCompletedAt().toLocalDate(), Collectors.summingInt(PomodoroSession::getDurationMinutes)));
+
+        // ensure all 7 days present
+        return monday.datesUntil(monday.plusDays(7))
+            .map(d -> new WeeklyPomodoroDTO(d, grouped.getOrDefault(d, 0)))
+            .collect(Collectors.toList());
+        }
 
     private User getCurrentUser() {
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
