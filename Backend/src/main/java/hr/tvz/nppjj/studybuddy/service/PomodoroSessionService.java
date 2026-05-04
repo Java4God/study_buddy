@@ -1,9 +1,10 @@
 package hr.tvz.nppjj.studybuddy.service;
 
-import hr.tvz.nppjj.studybuddy.dto.PomodoroSessionDTO;
-
 import java.util.List;
 import java.util.UUID;
+
+import hr.tvz.nppjj.studybuddy.dto.PomodoroSessionDTO;
+import hr.tvz.nppjj.studybuddy.dto.WeeklyPomodoroDTO;
 
 public interface PomodoroSessionService {
     List<PomodoroSessionDTO> getAllSessions();
@@ -12,4 +13,5 @@ public interface PomodoroSessionService {
     PomodoroSessionDTO createSession(PomodoroSessionDTO dto, UUID userId);
     PomodoroSessionDTO updateSession(UUID id, PomodoroSessionDTO dto);
     void deleteSession(UUID id);
+    List<WeeklyPomodoroDTO> getWeeklyTotals();
 }

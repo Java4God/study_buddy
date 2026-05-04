@@ -1,5 +1,18 @@
 package hr.tvz.nppjj.studybuddy.service;
 
+import java.time.LocalDate;
+import java.util.List;
+import java.util.UUID;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import hr.tvz.nppjj.studybuddy.dto.ExamScheduleDTO;
 import hr.tvz.nppjj.studybuddy.exception.ExamNotFoundException;
 import hr.tvz.nppjj.studybuddy.exception.UserNotFoundException;
@@ -8,14 +21,6 @@ import hr.tvz.nppjj.studybuddy.model.User;
 import hr.tvz.nppjj.studybuddy.repository.ExamScheduleRepository;
 import hr.tvz.nppjj.studybuddy.repository.UserRepository;
 import lombok.AllArgsConstructor;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.security.access.AccessDeniedException;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import java.util.UUID;
 
 @Service
 @AllArgsConstructor
@@ -32,6 +37,19 @@ public class ExamScheduleServiceImpl implements ExamScheduleService {
             return examScheduleRepository.findAll(pageable).map(this::toDTO);
         }
         return examScheduleRepository.findAllByUserId(currentUser.getId(), pageable).map(this::toDTO);
+    }
+
+    @Override
+    public List<ExamScheduleDTO> getNextExams() {
+        User currentUser = getCurrentUser();
+        Pageable pageable = PageRequest.of(0, 3, Sort.by(Sort.Order.asc("examDate"), Sort.Order.asc("examTime")));
+        LocalDate today = LocalDate.now();
+
+        Page<ExamSchedule> nextExams = isAdmin(currentUser)
+                ? examScheduleRepository.findByExamDateGreaterThanEqual(today, pageable)
+                : examScheduleRepository.findByUserIdAndExamDateGreaterThanEqual(currentUser.getId(), today, pageable);
+
+        return nextExams.stream().map(this::toDTO).toList();
     }
 
     @Override
