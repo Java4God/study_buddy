@@ -1,3 +1,5 @@
+"use client";
+
 import {
   Timer,
   Users,
@@ -8,7 +10,6 @@ import {
   Sparkles,
 } from "lucide-react";
 
-import { cookies, headers } from "next/headers";
 import Link from "next/link";
 import {
   Card,
@@ -16,15 +17,10 @@ import {
   CardHeader,
   CardTitle,
 } from "../../components/card";
-
-interface Exam {
-  id: string | number | null;
-  subjectName: string;
-  examDate: string;
-  examTime: string;
-  location?: string;
-  notes?: string;
-}
+import WeeklyProgressCard from "../../components/weekly-progress-card";
+import { useCallback, useEffect, useState } from "react";
+import axios from "axios";
+import { Exam, RawWeeklyProgressItem } from "@/app/types";
 
 function getDaysUntil(dateStr: string): number {
   const today = new Date();
@@ -35,30 +31,14 @@ function getDaysUntil(dateStr: string): number {
 }
 
 async function getUpcomingExams(): Promise<Exam[]> {
-  const cookieStore = await cookies();
-  const cookieHeader = cookieStore
-    .getAll()
-    .map(({ name, value }) => `${name}=${value}`)
-    .join("; ");
-  const host = (await headers()).get("host");
-
-  if (!host) {
-    return [];
-  }
-
-  const protocol = process.env.NODE_ENV === "production" ? "https" : "http";
-
   try {
-    const response = await fetch(`${protocol}://${host}/api/exam/next`, {
-      headers: cookieHeader ? { cookie: cookieHeader } : undefined,
-      cache: "no-store",
-    });
+    const response = await axios.get<Exam[]>(`/api/exam/next`);
 
-    if (!response.ok) {
+    if (response.status !== 200) {
       return [];
     }
 
-    const payload = await response.json();
+    const payload = await response.data;
     if (!Array.isArray(payload)) {
       return [];
     }
@@ -76,84 +56,93 @@ async function getUpcomingExams(): Promise<Exam[]> {
   }
 }
 
-export default async function DashboardPage() {
-  const todayStats = {
-    "Pomodoro Sessions": 6,
-    "Study Hours": 3,
-    "Flashcards Reviewed": 24,
-    "Day Streak": 7,
-  };
+const colorPairs = [
+  { bg: "#f4c2c2", text: "#8b4a4a" },
+  { bg: "#add8e6", text: "#2f5d73" },
+  { bg: "#c1e1c1", text: "#3e6b3e" },
+  { bg: "#fff5ba", text: "#8a7a2f" },
+];
 
-  const colorPairs = [
-    { bg: "#f4c2c2", text: "#8b4a4a" },
-    { bg: "#add8e6", text: "#2f5d73" },
-    { bg: "#c1e1c1", text: "#3e6b3e" },
-    { bg: "#fff5ba", text: "#8a7a2f" },
-  ];
+export default function DashboardPage() {
+  const [upcomingExams, setUpcomingExams] = useState<Exam[]>([]);
+  const [weeklyProgress, setWeeklyProgress] = useState<
+    { day: string; minutes: number }[]
+  >([
+    { day: "Mon", minutes: 0 },
+    { day: "Tue", minutes: 0 },
+    { day: "Wed", minutes: 0 },
+    { day: "Thu", minutes: 0 },
+    { day: "Fri", minutes: 0 },
+    { day: "Sat", minutes: 0 },
+    { day: "Sun", minutes: 0 },
+  ]);
+  const [todayStats, setTodayStats] = useState({
+    "Pomodoro Sessions": 0,
+    "Study Hours": 0,
+    "Flashcards Reviewed": 0,
+    "Day Streak": 0,
+  });
 
-  const upcomingExams = await getUpcomingExams();
+  const weeklyProgressProcess = useCallback(
+    (rawWeekly: RawWeeklyProgressItem[]) => {
+      console.log("Raw weekly progress data:", rawWeekly);
+      if (rawWeekly.length > 0) {
+        const mapByDate = new Map(
+          rawWeekly.map((r: RawWeeklyProgressItem) => [
+            String(r.date),
+            Number(r.totalMinutes ?? 0),
+          ]),
+        );
 
-  const weeklyProgress = [
-    { day: "Mon", hours: 0 },
-    { day: "Tue", hours: 0 },
-    { day: "Wed", hours: 0 },
-    { day: "Thu", hours: 0 },
-    { day: "Fri", hours: 0 },
-    { day: "Sat", hours: 0 },
-    { day: "Sun", hours: 0 },
-  ];
+        const today = new Date();
+        const day = today.getDay();
+        const diffToMonday = (day + 6) % 7; // 0->Mon
+        const monday = new Date(today);
+        monday.setDate(today.getDate() - diffToMonday);
 
-  // fetch real weekly totals
-  const rawWeekly = await (async () => {
-    try {
-      const cookieStore = await cookies();
-      const cookieHeader = cookieStore
-        .getAll()
-        .map(({ name, value }) => `${name}=${value}`)
-        .join("; ");
-      const host = (await headers()).get("host");
-      if (!host) return [];
-      const protocol = process.env.NODE_ENV === "production" ? "https" : "http";
-      const res = await fetch(`${protocol}://${host}/api/timer/week`, {
-        headers: cookieHeader ? { cookie: cookieHeader } : undefined,
-        cache: "no-store",
-      });
-      if (!res.ok) return [];
-      const payload = await res.json();
-      return Array.isArray(payload) ? payload : [];
-    } catch {
-      return [];
-    }
-  })();
+        const weeklyProgressTemp = weeklyProgress.slice();
+        for (let i = 0; i < 7; i++) {
+          const d = new Date(monday);
+          d.setDate(monday.getDate() + i);
+          const iso = d.toISOString().slice(0, 10);
+          const minutes = mapByDate.get(iso) ?? 0;
+          weeklyProgressTemp[i].minutes = minutes;
+        }
+        setWeeklyProgress(weeklyProgressTemp);
 
-  // map rawWeekly (date, totalMinutes) into weeklyProgress
-  if (Array.isArray(rawWeekly) && rawWeekly.length > 0) {
-    const mapByDate = new Map(
-      rawWeekly.map((r: any) => [String(r.date), Number(r.totalMinutes ?? 0)]),
-    );
+        const todayIso = new Date().toISOString().slice(0, 10);
+        const todayMinutes = mapByDate.get(todayIso) ?? 0;
+        setTodayStats({
+          ...todayStats,
+          "Study Hours": Math.round((todayMinutes / 60) * 10) / 10,
+          "Pomodoro Sessions": Math.max(0, Math.round(todayMinutes / 25)),
+        });
+      }
+    },
+    [todayStats, weeklyProgress],
+  );
 
-    const today = new Date();
-    // ISO week starting Monday
-    const day = today.getDay();
-    const diffToMonday = (day + 6) % 7; // 0->Mon
-    const monday = new Date(today);
-    monday.setDate(today.getDate() - diffToMonday);
+  useEffect(() => {
+    getUpcomingExams().then(setUpcomingExams);
+  }, []);
 
-    for (let i = 0; i < 7; i++) {
-      const d = new Date(monday);
-      d.setDate(monday.getDate() + i);
-      const iso = d.toISOString().slice(0, 10);
-      const minutes = mapByDate.get(iso) ?? 0;
-      weeklyProgress[i].hours = Math.round((minutes / 60) * 10) / 10;
-    }
+  useEffect(() => {
+    const fetchWeeklyProgress = async () => {
+      try {
+        await fetch(`/api/timer/week`, {})
+          .then((r) => r.json())
+          .then((w) => weeklyProgressProcess(w))
+          .catch((e) => {
+            console.error("Error fetching weekly progress:", e);
+            return [];
+          });
+      } catch {
+        return [];
+      }
+    };
 
-    // update today's stats
-    const todayIso = new Date().toISOString().slice(0, 10);
-    const todayMinutes = mapByDate.get(todayIso) ?? 0;
-    todayStats["Study Hours"] = Math.round((todayMinutes / 60) * 10) / 10;
-    // approximate pomodoro sessions by 25-minute blocks
-    todayStats["Pomodoro Sessions"] = Math.max(0, Math.round(todayMinutes / 25));
-  }
+    fetchWeeklyProgress();
+  }, []);
 
   return (
     <div className="w-full bg-switch-background/20">
@@ -230,17 +219,7 @@ export default async function DashboardPage() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                {weeklyProgress.map((day) => (
-                  <div key={day.day} className="space-y-2">
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-gray-600">{day.day}</span>
-                      <span>{day.hours}h</span>
-                    </div>
-                    {/*<Progress value={(day.hours / maxHours) * 100} />*/}
-                  </div>
-                ))}
-              </div>
+              <WeeklyProgressCard weeklyProgress={weeklyProgress} />
             </CardContent>
           </Card>
           <Card>
