@@ -40,7 +40,7 @@ public class UserController {
 
     @GetMapping("me")
     ResponseEntity<UserDTO> getCurrentUser(@RequestHeader("Authorization") String authHeader){
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+        if (authHeader.isBlank() || !authHeader.startsWith("Bearer ")) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
         String token = authHeader.substring(7);
@@ -118,9 +118,4 @@ public class UserController {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body("No such user with id: " + id);
     }
 
-    public record UserTokenRequest(
-            @NotBlank(message = "Token is required")
-            String token
-    ) {
-    }
 }
