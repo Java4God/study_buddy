@@ -193,12 +193,12 @@ class UserControllerTest {
                 "admin2@tvz.hr"
         );
 
-        UserAuthResponse authResponse = new UserAuthResponse("access-token", "refresh-token");
+            UserAuthResponse authResponse = new UserAuthResponse("access-token", "refresh-token");
 
-        when(userService.newUser(any(User.class)))
-                .thenReturn(Optional.of(userDTO));
-        when(userService.authenticate(any(UserAuthRequest.class)))
-                .thenReturn(Optional.of(authResponse));
+            when(userService.newUser(any(User.class)))
+                    .thenReturn(Optional.of(userDTO));
+            when(userService.authenticate(any(UserAuthRequest.class)))
+                    .thenReturn(Optional.of(authResponse));
 
         mockMvc.perform(post("/users/register-user")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -243,7 +243,7 @@ class UserControllerTest {
     }
     @Test
     void updateUser_found() throws Exception {
-        UpdateUserRequest request = new UpdateUserRequest();
+        UpdateUserRequest request = new UpdateUserRequest(userDTO.username(), userDTO.email());
         request.setUsername("updated");
 
         when(userService.updateUser(eq(userId), any()))
@@ -262,7 +262,7 @@ class UserControllerTest {
 
         mockMvc.perform(put("/users/update-user/" + userId)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(new UpdateUserRequest())))
+                        .content(objectMapper.writeValueAsString(new UpdateUserRequest(userDTO.username(), userDTO.email()))))
                 .andExpect(status().isNotFound());
     }
     @Test
