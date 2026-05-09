@@ -20,7 +20,8 @@ import {
 import WeeklyProgressCard from "../../components/weekly-progress-card";
 import { useCallback, useEffect, useState } from "react";
 import axios from "axios";
-import { Exam, RawWeeklyProgressItem } from "@/app/types";
+import { Exam, RawWeeklyProgressItem, WeeklyProgressItem } from "@/app/types";
+import { calculateWeeklyProgress } from "@/utils/UserInfoFunctions";
 
 function getDaysUntil(dateStr: string): number {
   const today = new Date();
@@ -65,9 +66,7 @@ const colorPairs = [
 
 export default function DashboardPage() {
   const [upcomingExams, setUpcomingExams] = useState<Exam[]>([]);
-  const [weeklyProgress, setWeeklyProgress] = useState<
-    { day: string; minutes: number }[]
-  >([
+  const [weeklyProgress, setWeeklyProgress] = useState<WeeklyProgressItem[]>([
     { day: "Mon", minutes: 0 },
     { day: "Tue", minutes: 0 },
     { day: "Wed", minutes: 0 },
@@ -85,39 +84,19 @@ export default function DashboardPage() {
 
   const weeklyProgressProcess = useCallback(
     (rawWeekly: RawWeeklyProgressItem[]) => {
-      console.log("Raw weekly progress data:", rawWeekly);
-      if (rawWeekly.length > 0) {
-        const mapByDate = new Map(
-          rawWeekly.map((r: RawWeeklyProgressItem) => [
-            String(r.date),
-            Number(r.totalMinutes ?? 0),
-          ]),
-        );
+      const {
+        weeklyProgress: weeklyProgressNew,
+        studyHours,
+        pomodoroSessions,
+      } = calculateWeeklyProgress(rawWeekly, weeklyProgress) || {};
 
-        const today = new Date();
-        const day = today.getDay();
-        const diffToMonday = (day + 6) % 7; // 0->Mon
-        const monday = new Date(today);
-        monday.setDate(today.getDate() - diffToMonday);
+      setWeeklyProgress(weeklyProgressNew ?? []);
 
-        const weeklyProgressTemp = weeklyProgress.slice();
-        for (let i = 0; i < 7; i++) {
-          const d = new Date(monday);
-          d.setDate(monday.getDate() + i);
-          const iso = d.toISOString().slice(0, 10);
-          const minutes = mapByDate.get(iso) ?? 0;
-          weeklyProgressTemp[i].minutes = minutes;
-        }
-        setWeeklyProgress(weeklyProgressTemp);
-
-        const todayIso = new Date().toISOString().slice(0, 10);
-        const todayMinutes = mapByDate.get(todayIso) ?? 0;
-        setTodayStats({
-          ...todayStats,
-          "Study Hours": Math.round((todayMinutes / 60) * 10) / 10,
-          "Pomodoro Sessions": Math.max(0, Math.round(todayMinutes / 25)),
-        });
-      }
+      setTodayStats({
+        ...todayStats,
+        "Study Hours": studyHours ?? 0,
+        "Pomodoro Sessions": pomodoroSessions ?? 0,
+      });
     },
     [todayStats, weeklyProgress],
   );

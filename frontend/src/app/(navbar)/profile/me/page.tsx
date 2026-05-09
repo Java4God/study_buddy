@@ -1,8 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
-  Badge,
   Users,
   Activity,
   Timer,
@@ -25,6 +24,10 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/app/components/tabs";
+import { PomodoroSession } from "@/app/types";
+import { calculateTotalProgress } from "@/utils/UserInfoFunctions";
+import { ResetPasswordDialog } from "@/app/components/reset-password-dialog";
+import { ProfileLoadStatus } from "@/app/components/profile-load-status";
 
 type UserProfile = {
   uuid: string;
@@ -74,6 +77,17 @@ export default function ProfilePageMe() {
   const [updateLoading, setUpdateLoading] = useState(false);
   const [updateError, setUpdateError] = useState("");
   const [updateSuccess, setUpdateSuccess] = useState(false);
+  const [resetDialogOpen, setResetDialogOpen] = useState(false);
+  const [resetLoading, setResetLoading] = useState(false);
+  const [resetError, setResetError] = useState("");
+  const [resetMessage, setResetMessage] = useState("");
+
+  const [totalStats, setTotalStats] = useState({
+    studyHours: 0,
+    pomodoroSessions: 0,
+    flashcardsReviewed: 0,
+    examsCompleted: 0,
+  });
 
   const friends: Friend[] = [
     {
@@ -132,15 +146,6 @@ export default function ProfilePageMe() {
       type: "social",
     },
   ];
-
-  const stats = {
-    totalStudyHours: 142,
-    totalPomodoros: 284,
-    flashcardsReviewed: 1250,
-    examsCompleted: 8,
-    currentStreak: 7,
-    longestStreak: 21,
-  };
 
   const achievements: Achievement[] = [
     {
@@ -229,6 +234,51 @@ export default function ProfilePageMe() {
     setUpdateSuccess(false);
   };
 
+  const handleResetDialogChange = (open: boolean) => {
+    setResetDialogOpen(open);
+    if (open) {
+      setResetError("");
+      setResetMessage("");
+    }
+  };
+
+  const handleSendResetEmail = async () => {
+    if (!profile?.email) {
+      setResetError("Email not found. Please update your profile email.");
+      return;
+    }
+
+    setResetLoading(true);
+    setResetError("");
+    setResetMessage("");
+
+    try {
+      const response = await fetch("/api/password-reset/request", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: profile.email }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data?.message ?? "Could not send reset email.");
+      }
+
+      setResetMessage(
+        data?.message ?? "If the account exists, a reset email has been sent.",
+      );
+    } catch (sendError) {
+      setResetError(
+        sendError instanceof Error
+          ? sendError.message
+          : "Could not send reset email.",
+      );
+    } finally {
+      setResetLoading(false);
+    }
+  };
+
   const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -277,42 +327,83 @@ export default function ProfilePageMe() {
     }
   };
 
+  const totalProgressProcess = useCallback(
+    (rawTotal: PomodoroSession[]) => {
+      const { studyHours, pomodoroSessions } =
+        calculateTotalProgress(rawTotal) || {};
+
+      setTotalStats({
+        ...totalStats,
+        studyHours: studyHours ?? 0,
+        pomodoroSessions: pomodoroSessions ?? 0,
+      });
+    },
+    [totalStats],
+  );
+
+  useEffect(() => {
+    const fetchTotalProgress = async () => {
+      try {
+        if (!profile?.uuid) return;
+        await fetch(`/api/timer/total?id=${profile?.uuid}`, {})
+          .then((r) => r.json())
+          .then((w) => totalProgressProcess(w))
+          .catch((e) => {
+            console.error("Error fetching total progress:", e);
+            return [];
+          });
+      } catch {
+        return [];
+      }
+    };
+
+    fetchTotalProgress();
+  }, []);
+
   const initials = useMemo(
     () => getInitials(profile?.username ?? "", profile?.email ?? ""),
     [profile?.username, profile?.email],
   );
 
-  if (loading) {
-    return (
-      <div className="space-y-6 p-8 px-20 flex-1 bg-switch-background/20">
-        <div>
-          <h1 className="text-3xl mb-2">Profile</h1>
-          <p className="text-gray-600">Loading profile...</p>
-        </div>
-      </div>
-    );
-  }
+  const statCards = useMemo(() => {
+    return [
+      {
+        icon: <Timer className="size-6 mx-auto mb-2 text-indigo-600" />,
+        value: totalStats.pomodoroSessions,
+        label: "Pomodoros",
+      },
+      {
+        icon: <Activity className="size-6 mx-auto mb-2 text-blue-600" />,
+        value: `${totalStats.studyHours}h`,
+        label: "Study Time",
+      },
+      {
+        icon: <Layers className="size-6 mx-auto mb-2 text-purple-600" />,
+        value: totalStats.flashcardsReviewed,
+        label: "Flashcards",
+      },
+      {
+        icon: <Calendar className="size-6 mx-auto mb-2 text-green-600" />,
+        value: totalStats.examsCompleted,
+        label: "Exams coming up",
+      },
+      /*
+      {
+        icon: <Flame className="size-6 mx-auto mb-2 text-orange-600" />,
+        value: totalStats["Current Streak"],
+        label: "Current Streak",
+      },
+      {
+        icon: <Target className="size-6 mx-auto mb-2 text-red-600" />,
+        value: totalStats["Best Streak"],
+        label: "Best Streak",
+      },
+      */
+    ];
+  }, [totalStats]);
 
-  if (error) {
-    return (
-      <div className="space-y-6 p-8 px-20 flex-1 bg-switch-background/20">
-        <div>
-          <h1 className="text-3xl mb-2">Profile</h1>
-          <p className="text-red-600">{error}</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (!profile) {
-    return (
-      <div className="space-y-6 p-8 px-20 flex-1 bg-switch-background/20">
-        <div>
-          <h1 className="text-3xl mb-2">Profile</h1>
-          <p className="text-gray-600">Profile not found.</p>
-        </div>
-      </div>
-    );
+  if (loading || !profile || error) {
+    return <ProfileLoadStatus loading={loading} error={error} />;
   }
 
   return (
@@ -332,6 +423,7 @@ export default function ProfilePageMe() {
               <div className="flex-1">
                 <h2 className="text-2xl mb-1">{profile.username}</h2>
                 <p className="text-gray-600 mb-3">{profile.email}</p>
+                {/*}
                 <div className="flex gap-2">
                   <Badge className="gap-1">
                     <Flame className="size-3" />
@@ -342,10 +434,22 @@ export default function ProfilePageMe() {
                     {achievements.filter((a) => a.earned).length} achievements
                   </Badge>
                 </div>
+                */}
               </div>
-              <Button onClick={handleEditClick} variant="outline">
-                Edit Profile
-              </Button>
+              <div className="flex flex-col gap-2 sm:flex-row">
+                <Button onClick={handleEditClick} variant="outline">
+                  Edit Profile
+                </Button>
+                <ResetPasswordDialog
+                  resetDialogOpen={resetDialogOpen}
+                  handleResetDialogChange={handleResetDialogChange}
+                  resetError={resetError}
+                  resetMessage={resetMessage}
+                  resetLoading={resetLoading}
+                  email={profile.email}
+                  handleSendResetEmail={handleSendResetEmail}
+                />
+              </div>
             </div>
           ) : (
             <form onSubmit={handleUpdateProfile} className="space-y-4">
@@ -401,48 +505,17 @@ export default function ProfilePageMe() {
       </Card>
 
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-        <Card>
-          <CardContent className="p-4 text-center">
-            <Timer className="size-6 mx-auto mb-2 text-indigo-600" />
-            <p className="text-2xl">{stats.totalPomodoros}</p>
-            <p className="text-xs text-gray-600">Pomodoros</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4 text-center">
-            <Activity className="size-6 mx-auto mb-2 text-blue-600" />
-            <p className="text-2xl">{stats.totalStudyHours}h</p>
-            <p className="text-xs text-gray-600">Study Time</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4 text-center">
-            <Layers className="size-6 mx-auto mb-2 text-purple-600" />
-            <p className="text-2xl">{stats.flashcardsReviewed}</p>
-            <p className="text-xs text-gray-600">Flashcards</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4 text-center">
-            <Calendar className="size-6 mx-auto mb-2 text-green-600" />
-            <p className="text-2xl">{stats.examsCompleted}</p>
-            <p className="text-xs text-gray-600">Exams</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4 text-center">
-            <Flame className="size-6 mx-auto mb-2 text-orange-600" />
-            <p className="text-2xl">{stats.currentStreak}</p>
-            <p className="text-xs text-gray-600">Current Streak</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4 text-center">
-            <Target className="size-6 mx-auto mb-2 text-red-600" />
-            <p className="text-2xl">{stats.longestStreak}</p>
-            <p className="text-xs text-gray-600">Best Streak</p>
-          </CardContent>
-        </Card>
+        {statCards.map((stat, id) => {
+          return (
+            <Card key={id}>
+              <CardContent className="p-4 text-center">
+                {stat.icon}
+                <p className="text-2xl">{stat.value}</p>
+                <p className="text-xs text-gray-600">{stat.label}</p>
+              </CardContent>
+            </Card>
+          );
+        })}
       </div>
 
       <Tabs defaultValue="friends">

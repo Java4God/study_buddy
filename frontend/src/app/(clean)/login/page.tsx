@@ -8,6 +8,16 @@ import {
   CardTitle,
 } from "@/app/components/card";
 import Input from "@/app/components/input";
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/app/components/dialogs";
 import axios from "axios";
 import { BookOpen } from "lucide-react";
 import Link from "next/link";
@@ -19,6 +29,11 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [resetDialogOpen, setResetDialogOpen] = useState(false);
+  const [resetEmail, setResetEmail] = useState("");
+  const [resetLoading, setResetLoading] = useState(false);
+  const [resetError, setResetError] = useState("");
+  const [resetMessage, setResetMessage] = useState("");
   const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -41,6 +56,52 @@ export default function LoginPage() {
       setError("Invalid username or password");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleResetDialogChange = (open: boolean) => {
+    setResetDialogOpen(open);
+    if (open) {
+      setResetEmail("");
+      setResetError("");
+      setResetMessage("");
+    }
+  };
+
+  const handleSendResetEmail = async () => {
+    if (!resetEmail.trim()) {
+      setResetError("Email is required.");
+      return;
+    }
+
+    setResetLoading(true);
+    setResetError("");
+    setResetMessage("");
+
+    try {
+      const response = await fetch("/api/password-reset/request", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: resetEmail.trim() }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data?.message ?? "Could not send reset email.");
+      }
+
+      setResetMessage(
+        data?.message ?? "If the account exists, a reset email has been sent.",
+      );
+    } catch (sendError) {
+      setResetError(
+        sendError instanceof Error
+          ? sendError.message
+          : "Could not send reset email.",
+      );
+    } finally {
+      setResetLoading(false);
     }
   };
 
@@ -86,6 +147,61 @@ export default function LoginPage() {
               </Button>
             </div>
           </form>
+          <div className="mt-3 text-center">
+            <Dialog
+              open={resetDialogOpen}
+              onOpenChange={handleResetDialogChange}
+            >
+              <DialogTrigger asChild>
+                <button
+                  type="button"
+                  className="text-sm text-indigo-600 hover:underline"
+                >
+                  Forgot password?
+                </button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Reset your password</DialogTitle>
+                  <DialogDescription>
+                    Enter your account email and we will send a reset link.
+                  </DialogDescription>
+                </DialogHeader>
+
+                <Input
+                  label={"Email"}
+                  setValue={(value) => {
+                    setResetEmail(value);
+                    setResetError("");
+                  }}
+                  placeholder="you@example.com"
+                  value={resetEmail}
+                  type="email"
+                  error={resetError}
+                />
+
+                {resetMessage && (
+                  <div className="rounded-lg bg-green-50 p-3 text-sm text-green-700">
+                    {resetMessage}
+                  </div>
+                )}
+
+                <DialogFooter>
+                  <DialogClose asChild>
+                    <Button variant="outline" disabled={resetLoading}>
+                      Close
+                    </Button>
+                  </DialogClose>
+                  <Button
+                    onClick={handleSendResetEmail}
+                    disabled={resetLoading}
+                  >
+                    {resetLoading ? "Sending..." : "Send reset email"}
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          </div>
           <div className="mt-4 text-center text-sm text-gray-600">
             Dont have an account?{" "}
             <Link href="/register" className="text-indigo-600 hover:underline">
