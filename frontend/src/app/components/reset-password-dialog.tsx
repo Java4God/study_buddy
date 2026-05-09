@@ -59,7 +59,10 @@ export const ResetPasswordDialog = ({
               Close
             </Button>
           </DialogClose>
-          <Button onClick={handleSendResetEmail} disabled={resetLoading}>
+          <Button
+            onClick={handleSendResetEmail}
+            disabled={resetLoading || !!resetMessage}
+          >
             {resetMessage
               ? "Reset email sent!"
               : resetLoading
