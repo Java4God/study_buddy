@@ -9,8 +9,8 @@ function jsonError(message: string, status = 500) {
   return NextResponse.json({ message }, { status });
 }
 
-async function fetchWeek(accessToken: string) {
-  return axios.get(`${API_DOMAIN + POMODORO_SESSIONS}week`, {
+async function fetchTotal(accessToken: string, id: string) {
+  return axios.get(`${API_DOMAIN + POMODORO_SESSIONS}user/${id}`, {
     timeout: 10_000,
     validateStatus: () => true,
     headers: {
@@ -19,17 +19,23 @@ async function fetchWeek(accessToken: string) {
   });
 }
 
-export async function GET() {
+export async function GET(req: Request) {
+  const url = new URL(req.url);
+  const id = url.searchParams.get("id");
+  console.log("Fetching total progress for user id:", id);
+  if (!id) {
+    return jsonError("Missing user id", 400);
+  }
   let accessToken = await getAuthorizedToken();
   if (!accessToken) return jsonError("Unauthorized", 401);
 
   try {
-    let response = await fetchWeek(accessToken);
+    let response = await fetchTotal(accessToken, id);
 
     if (response.status === 401 || response.status === 403) {
       accessToken = await refreshAccessToken();
       if (!accessToken) return jsonError("Unauthorized", 401);
-      response = await fetchWeek(accessToken);
+      response = await fetchTotal(accessToken, id);
     }
 
     if (response.status < 200 || response.status >= 400) {

@@ -8,6 +8,8 @@ import {
   Target,
   Calendar,
   Sparkles,
+  Activity,
+  Flame,
 } from "lucide-react";
 
 import Link from "next/link";
@@ -18,9 +20,10 @@ import {
   CardTitle,
 } from "../../components/card";
 import WeeklyProgressCard from "../../components/weekly-progress-card";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import axios from "axios";
-import { Exam, RawWeeklyProgressItem } from "@/app/types";
+import { Exam, RawWeeklyProgressItem, WeeklyProgressItem } from "@/app/types";
+import { calculateWeeklyProgress } from "@/utils/UserInfoFunctions";
 
 function getDaysUntil(dateStr: string): number {
   const today = new Date();
@@ -43,31 +46,15 @@ async function getUpcomingExams(): Promise<Exam[]> {
       return [];
     }
 
-    return payload.map((exam) => ({
-      id: exam.id ?? null,
-      subjectName: exam.subjectName ?? "Unnamed exam",
-      examDate: exam.examDate ?? "",
-      examTime: exam.examTime ?? "",
-      location: exam.location ?? undefined,
-      notes: exam.notes ?? undefined,
-    }));
+    return payload;
   } catch {
     return [];
   }
 }
 
-const colorPairs = [
-  { bg: "#f4c2c2", text: "#8b4a4a" },
-  { bg: "#add8e6", text: "#2f5d73" },
-  { bg: "#c1e1c1", text: "#3e6b3e" },
-  { bg: "#fff5ba", text: "#8a7a2f" },
-];
-
 export default function DashboardPage() {
   const [upcomingExams, setUpcomingExams] = useState<Exam[]>([]);
-  const [weeklyProgress, setWeeklyProgress] = useState<
-    { day: string; minutes: number }[]
-  >([
+  const [weeklyProgress, setWeeklyProgress] = useState<WeeklyProgressItem[]>([
     { day: "Mon", minutes: 0 },
     { day: "Tue", minutes: 0 },
     { day: "Wed", minutes: 0 },
@@ -85,39 +72,19 @@ export default function DashboardPage() {
 
   const weeklyProgressProcess = useCallback(
     (rawWeekly: RawWeeklyProgressItem[]) => {
-      console.log("Raw weekly progress data:", rawWeekly);
-      if (rawWeekly.length > 0) {
-        const mapByDate = new Map(
-          rawWeekly.map((r: RawWeeklyProgressItem) => [
-            String(r.date),
-            Number(r.totalMinutes ?? 0),
-          ]),
-        );
+      const {
+        weeklyProgress: weeklyProgressNew,
+        studyHours,
+        pomodoroSessions,
+      } = calculateWeeklyProgress(rawWeekly, weeklyProgress) || {};
 
-        const today = new Date();
-        const day = today.getDay();
-        const diffToMonday = (day + 6) % 7; // 0->Mon
-        const monday = new Date(today);
-        monday.setDate(today.getDate() - diffToMonday);
+      setWeeklyProgress(weeklyProgressNew ?? []);
 
-        const weeklyProgressTemp = weeklyProgress.slice();
-        for (let i = 0; i < 7; i++) {
-          const d = new Date(monday);
-          d.setDate(monday.getDate() + i);
-          const iso = d.toISOString().slice(0, 10);
-          const minutes = mapByDate.get(iso) ?? 0;
-          weeklyProgressTemp[i].minutes = minutes;
-        }
-        setWeeklyProgress(weeklyProgressTemp);
-
-        const todayIso = new Date().toISOString().slice(0, 10);
-        const todayMinutes = mapByDate.get(todayIso) ?? 0;
-        setTodayStats({
-          ...todayStats,
-          "Study Hours": Math.round((todayMinutes / 60) * 10) / 10,
-          "Pomodoro Sessions": Math.max(0, Math.round(todayMinutes / 25)),
-        });
-      }
+      setTodayStats({
+        ...todayStats,
+        "Study Hours": studyHours ?? 0,
+        "Pomodoro Sessions": pomodoroSessions ?? 0,
+      });
     },
     [todayStats, weeklyProgress],
   );
@@ -144,6 +111,30 @@ export default function DashboardPage() {
     fetchWeeklyProgress();
   }, []);
 
+  const statCards = useMemo(() => {
+    return [
+      {
+        label: "Pomodoro Sessions",
+        value: todayStats["Pomodoro Sessions"],
+        icon: <Timer className="size-6 text-red-800" />,
+        bgColor: "#f4c2c2",
+      },
+      {
+        label: "Study Hours",
+        value: todayStats["Study Hours"],
+        icon: <Activity className="size-6 text-blue-800" />,
+        bgColor: "#dbeafe",
+      },
+      {
+        label: "Flashcards Reviewed",
+        value: todayStats["Flashcards Reviewed"],
+        icon: <Layers className="size-6 text-green-800" />,
+        bgColor: "#c1e1c1",
+      },
+      { label: "Day Streak", value: todayStats["Day Streak"], icon: <Flame className="size-6 text-orange-800" />, bgColor: "#ffe4b5" },
+    ];
+  }, [todayStats]);
+
   return (
     <div className="w-full bg-switch-background/20">
       <div className="space-y-6 py-8 px-20 w-7xl">
@@ -153,23 +144,20 @@ export default function DashboardPage() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          {Object.entries(todayStats).map(([key, value], i) => {
+          {statCards.map((item, i) => {
             return (
-              <Card key={key}>
+              <Card key={i}>
                 <CardContent className="p-6 ">
                   <div className="flex items-center justify-between gap-3">
                     <div>
-                      <p className="text-sm text-gray-600">{key}</p>
-                      <p className="text-3xl mt-1">{value}</p>
+                      <p className="text-sm text-gray-600">{item.label}</p>
+                      <p className="text-3xl mt-1">{item.value}</p>
                     </div>
                     <div
                       className="p-3 rounded-xl"
-                      style={{ backgroundColor: colorPairs[i].bg }}
+                      style={{ backgroundColor: item.bgColor }}
                     >
-                      <Timer
-                        className="size-6"
-                        style={{ color: colorPairs[i].text }}
-                      />
+                      {item.icon}
                     </div>
                   </div>
                 </CardContent>

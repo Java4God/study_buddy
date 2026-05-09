@@ -52,15 +52,9 @@ const Navbar = () => {
         })}
       </nav>
 
-      <div className="p-4 border-t border-gray-200 space-y-3">
-        <div className="flex items-center gap-3 p-3 rounded-lg bg-gray-50">
-          <div className="flex-1 min-w-0">
-            <p className="text-sm truncate">Name</p>
-            <p className="text-xs text-gray-500 truncate">Email</p>
-          </div>
-        </div>
+      <div className="p-6 border-t border-gray-200 space-y-3 mb-4">
         <div
-          className="cursor-pointer w-full justify-start text-red-600 hover:text-red-700 hover:bg-red-50"
+          className="cursor-pointer w-full justify-start text-red-600 hover:text-red-700 hover:bg-red-50 text-xl"
           onClick={logout}
         >
           Logout
