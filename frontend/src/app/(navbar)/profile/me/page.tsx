@@ -24,10 +24,11 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/app/components/tabs";
-import { PomodoroSession } from "@/app/types";
+import { Exam, PomodoroSession } from "@/app/types";
 import { calculateTotalProgress } from "@/utils/UserInfoFunctions";
 import { ResetPasswordDialog } from "@/app/components/reset-password-dialog";
 import { ProfileLoadStatus } from "@/app/components/profile-load-status";
+import axios from "axios";
 
 type UserProfile = {
   uuid: string;
@@ -86,7 +87,7 @@ export default function ProfilePageMe() {
     studyHours: 0,
     pomodoroSessions: 0,
     flashcardsReviewed: 0,
-    examsCompleted: 0,
+    examsToGo: 0,
   });
 
   const friends: Friend[] = [
@@ -358,12 +359,37 @@ export default function ProfilePageMe() {
     };
 
     fetchTotalProgress();
-  }, []);
+  }, [profile?.uuid]);
 
   const initials = useMemo(
     () => getInitials(profile?.username ?? "", profile?.email ?? ""),
     [profile?.username, profile?.email],
   );
+
+  async function getUpcomingExams(): Promise<Exam[]> {
+    try {
+      const response = await axios.get<Exam[]>(`/api/exam/next`);
+
+      if (response.status !== 200) {
+        return [];
+      }
+
+      const payload = await response.data;
+      if (!Array.isArray(payload)) {
+        return [];
+      }
+
+      return payload;
+    } catch {
+      return [];
+    }
+  }
+
+  useEffect(() => {
+    getUpcomingExams().then((exams) =>
+      setTotalStats((stats) => ({ ...stats, examsToGo: exams.length })),
+    );
+  }, []);
 
   const statCards = useMemo(() => {
     return [
@@ -384,7 +410,7 @@ export default function ProfilePageMe() {
       },
       {
         icon: <Calendar className="size-6 mx-auto mb-2 text-green-600" />,
-        value: totalStats.examsCompleted,
+        value: totalStats.examsToGo,
         label: "Exams coming up",
       },
       /*

@@ -25,8 +25,9 @@ import {
   TabsTrigger,
 } from "@/app/components/tabs";
 import { calculateTotalProgress } from "@/utils/UserInfoFunctions";
-import { PomodoroSession } from "@/app/types";
+import { Exam, PomodoroSession } from "@/app/types";
 import { ProfileLoadStatus } from "@/app/components/profile-load-status";
+import axios from "axios";
 
 type UserProfile = {
   uuid: string;
@@ -80,7 +81,7 @@ export default function ProfilePage({ params }: ProfilePageProps) {
     studyHours: 0,
     pomodoroSessions: 0,
     flashcardsReviewed: 0,
-    examsCompleted: 0,
+    examsToGo: 0,
   });
 
   const friends: Friend[] = [
@@ -140,15 +141,6 @@ export default function ProfilePage({ params }: ProfilePageProps) {
       type: "social",
     },
   ];
-
-  const stats = {
-    totalStudyHours: 142,
-    totalPomodoros: 284,
-    flashcardsReviewed: 1250,
-    examsCompleted: 8,
-    currentStreak: 7,
-    longestStreak: 21,
-  };
 
   const achievements: Achievement[] = [
     {
@@ -241,9 +233,35 @@ export default function ProfilePage({ params }: ProfilePageProps) {
     [totalStats],
   );
 
+  async function getUpcomingExams(): Promise<Exam[]> {
+    try {
+      const response = await axios.get<Exam[]>(`/api/exam/next`);
+
+      if (response.status !== 200) {
+        return [];
+      }
+
+      const payload = await response.data;
+      if (!Array.isArray(payload)) {
+        return [];
+      }
+
+      return payload;
+    } catch {
+      return [];
+    }
+  }
+
+  useEffect(() => {
+    getUpcomingExams().then((exams) =>
+      setTotalStats((stats) => ({ ...stats, examsToGo: exams.length })),
+    );
+  }, []);
+
   useEffect(() => {
     const fetchTotalProgress = async () => {
       try {
+        if (!profile?.uuid) return;
         await fetch(`/api/timer/total?id=${profile?.uuid}`, {})
           .then((r) => r.json())
           .then((w) => totalProgressProcess(w))
@@ -257,7 +275,7 @@ export default function ProfilePage({ params }: ProfilePageProps) {
     };
 
     fetchTotalProgress();
-  }, []);
+  }, [profile?.uuid]);
 
   const statCards = useMemo(() => {
     return [
@@ -278,7 +296,7 @@ export default function ProfilePage({ params }: ProfilePageProps) {
       },
       {
         icon: <Calendar className="size-6 mx-auto mb-2 text-green-600" />,
-        value: totalStats.examsCompleted,
+        value: totalStats.examsToGo,
         label: "Exams coming up",
       },
       /*
