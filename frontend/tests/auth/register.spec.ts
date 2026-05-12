@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { generateUser } from "../fixtures/user";
+import { generateUser, testWithExistingUser } from "../fixtures/user";
 
 test("register logout login test", async ({ page }) => {
   await page.goto("http://localhost:3000/register");
@@ -26,17 +26,20 @@ test("register logout login test", async ({ page }) => {
   await expect(page).toHaveURL("http://localhost:3000/dashboard");
 });
 
-test("register with existing email shows error", async ({ page }) => {
-  await page.goto("http://localhost:3000/register");
+testWithExistingUser(
+  "register with existing email shows error",
+  async ({ page , user}) => {
+    await page.goto("http://localhost:3000/register");
 
-  const user = generateUser();
+    const generatedUser = generateUser();
 
-  await page.getByLabel("Username").fill(user.username);
-  await page.getByLabel("Email").fill("test@test.com");
-  await page.getByTestId("password-input").fill(user.password);
-  await page.getByTestId("repeat-password-input").fill(user.password);
+    await page.getByLabel("Username").fill(user.username);
+    await page.getByLabel("Email").fill("test@test.com");
+    await page.getByTestId("password-input").fill(user.password);
+    await page.getByTestId("repeat-password-input").fill(user.password);
 
-  await page.getByRole("button", { name: "Create Account" }).click();
+    await page.getByRole("button", { name: "Create Account" }).click();
 
-  await expect(page.getByText("Email is already in use.")).toBeVisible();
-});
+    await expect(page.getByText("Email is already in use.")).toBeVisible();
+  },
+);
