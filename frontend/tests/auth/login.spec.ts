@@ -1,16 +1,15 @@
-import { test, expect } from "@playwright/test";
+import { expect } from "@playwright/test";
 import { testWithExistingUser } from "../fixtures/user";
 
-test("login test", async ({ page }) => {
+testWithExistingUser("login test", async ({ page, user }) => {
   await page.goto("http://localhost:3000/login");
 
-  await page.getByLabel("Username").fill("test");
-  await page.getByLabel("Password").fill("test1234");
+  await page.getByLabel("Username").fill(user.username);
+  await page.getByLabel("Password").fill(user.password);
   await page.getByRole("button", { name: "Sign In" }).click();
 
   await expect(page).toHaveURL("http://localhost:3000/dashboard");
 });
-
 
 testWithExistingUser(
   "login with wrong email shows error",
@@ -41,3 +40,18 @@ testWithExistingUser(
     await expect(page.getByText("Invalid username or password")).toBeVisible();
   },
 );
+
+testWithExistingUser("auto login test", async ({ page, user }) => {
+  await page.goto("/login");
+
+  await page.getByLabel("Username").fill(user.username);
+  await page.getByLabel("Password").fill(user.password);
+
+  await page.getByRole("button", { name: "Sign In" }).click();
+
+  await expect(page).toHaveURL("http://localhost:3000/dashboard");
+
+  await page.goto("/login");
+
+  await expect(page).toHaveURL("http://localhost:3000/dashboard");
+});

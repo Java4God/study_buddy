@@ -1,4 +1,4 @@
-import { test as base } from "@playwright/test";
+import { APIRequestContext, test as base, Page } from "@playwright/test";
 
 export function generateUser() {
   const id = crypto.randomUUID().slice(0, 23);
@@ -62,16 +62,6 @@ export const testWithExistingUser = base.extend<{
       }
     }
 
-    if (accessToken) {
-      try {
-        await request.get(`${apiDomain}users/logout`, {
-          headers: { Authorization: `Bearer ${accessToken}` },
-        });
-      } catch (e) {
-        console.error("Error logging out:", e);
-      }
-    }
-
     // provide the test user (include id if found)
     await provide({ ...user, id: createdUserId });
 
@@ -90,3 +80,34 @@ export const testWithExistingUser = base.extend<{
     }
   },
 });
+
+export async function login({
+  request,
+  page,
+  user,
+}: {
+  request: APIRequestContext;
+  page: Page;
+  user: TestUser;
+}) {
+  const res = await request.post("http://localhost:8080/users/login", {
+    data: {
+      username: user.username,
+      password: user.password,
+    },
+  });
+
+  const { access_token } = await res.json();
+
+  await page.context().addCookies([
+    {
+      name: "auth_token",
+      value: access_token,
+      domain: "localhost",
+      path: "/",
+      httpOnly: true,
+      secure: true,
+      sameSite: "Lax",
+    },
+  ]);
+}
