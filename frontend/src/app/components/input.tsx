@@ -8,6 +8,7 @@ type InputProps = {
   labelClassName?: string;
   errorClassName?: string;
   wrapperClassName?: string;
+  testId?: string;
 } & Omit<InputHTMLAttributes<HTMLInputElement>, "onChange">;
 
 const defaultInputStyles = (hasError: boolean) =>
@@ -45,6 +46,7 @@ export default function Input({
   errorClassName,
   wrapperClassName,
   id,
+  testId,
   ...props
 }: InputProps) {
   const generatedId = useId();
@@ -68,6 +70,7 @@ export default function Input({
         aria-describedby={error ? `${inputId}-error` : undefined}
         onChange={(e) => setValue(e.target.value)}
         className={className ?? defaultInputStyles(!!error)}
+        data-testid={testId}
       />
 
       {error ? (

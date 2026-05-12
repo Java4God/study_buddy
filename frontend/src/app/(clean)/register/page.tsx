@@ -176,6 +176,7 @@ const RegisterPage = () => {
               setValue={(value) => setPassword(value)}
               required
               error={passwordError}
+              testId="password-input"
             />
             {password.length > 0 && (
               <div className="space-y-1.5 pt-1">
@@ -199,6 +200,7 @@ const RegisterPage = () => {
               setValue={(value) => setRepeatPassword(value)}
               required
               error={repeatPasswordError}
+              testId="repeat-password-input"
             />
             <div className="flex">
               <Button type="submit" className="mx-auto" disabled={loading}>
