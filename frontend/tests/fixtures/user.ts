@@ -1,3 +1,5 @@
+import { test as base } from "@playwright/test";
+
 export function generateUser() {
   const id = crypto.randomUUID().slice(0, 23);
 
@@ -8,13 +10,16 @@ export function generateUser() {
   };
 }
 
-import { test as base } from "@playwright/test";
-
 type TestUser = {
   id?: string;
   username: string;
   email: string;
   password: string;
+};
+
+type RegisterResponse = {
+  refresh_token?: string;
+  access_token?: string;
 };
 
 export const testWithExistingUser = base.extend<{
@@ -23,14 +28,65 @@ export const testWithExistingUser = base.extend<{
   user: async ({ request }, provide) => {
     const user = generateUser();
 
-    const createdUser =await request.post("/api/users/register", {
+    const base = process.env.PLAYWRIGHT_BASE_URL || "http://localhost:3000";
+    const apiDomain = process.env.API_DOMAIN || "http://localhost:8080/";
+
+    const createdResp = await request.post(`${base}/api/auth/register`, {
       data: { ...user },
     });
-    console.log("Created user:", await createdUser.json());
 
-    // pass user into test
-    await provide(user);
+    let accessToken: string | undefined;
+    try {
+      const body = await createdResp.json();
+      accessToken = (body as RegisterResponse).access_token;
+      //console.log("Register response:", body);
+    } catch (e) {
+      console.error("Register response: (no json body)");
+    }
 
-    //await request.delete(`/api/users/delete-user/${createdUser.id}`);
+    let createdUserId: string | undefined;
+    if (accessToken) {
+      try {
+        const meResp = await request.get(`${apiDomain}users/me`, {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        });
+        if (meResp.ok()) {
+          const meJson = await meResp.json();
+          createdUserId = meJson?.uuid ?? meJson?.id ?? undefined;
+          //console.log("Fetched current user:", meJson);
+        } else {
+          console.error("Failed to fetch current user, status:", meResp.status);
+        }
+      } catch (e) {
+        console.error("Error fetching current user:", e);
+      }
+    }
+
+    if (accessToken) {
+      try {
+        await request.get(`${apiDomain}users/logout`, {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        });
+      } catch (e) {
+        console.error("Error logging out:", e);
+      }
+    }
+
+    // provide the test user (include id if found)
+    await provide({ ...user, id: createdUserId });
+
+    // teardown: delete the created user on the backend
+    if (createdUserId) {
+      try {
+        await request.delete(`${apiDomain}users/delete-user/${createdUserId}`, {
+          headers: accessToken
+            ? { Authorization: `Bearer ${accessToken}` }
+            : {},
+        });
+        //console.log("Deleted test user id:", createdUserId);
+      } catch (e) {
+        console.error("Failed to delete test user:", e);
+      }
+    }
   },
 });
