@@ -86,13 +86,15 @@ testWithExistingUser(
     await deleteButton.click();
 
     // Confirm deletion if there's a confirmation dialog
-    const confirmButton = page.getByRole("button", { name: /delete|confirm/i });
-    if (await confirmButton.isVisible()) {
-      await confirmButton.click();
-    }
+    const confirmButton = await page.getByRole("button", {
+      name: /delete|confirm/i,
+    });
+
+    await expect(confirmButton).toBeVisible();
+    await confirmButton.click();
 
     // Verify exam is deleted
-    await expect(page.locator(`text=${updatedSubject}`)).not.toBeVisible();
+    await expect(page.getByText(updatedSubject)).not.toBeVisible();
   },
 );
 
