@@ -23,4 +23,7 @@ public interface ExamScheduleRepository extends JpaRepository<ExamSchedule, UUID
     Page<ExamSchedule> findByUserIdAndExamDateGreaterThanEqual(UUID userId, LocalDate startDate, Pageable pageable);
 
     Page<ExamSchedule> findAllByUserId(UUID userId, Pageable pageable);
+
+    @Query("SELECT e FROM ExamSchedule e WHERE e.examDate = :targetDate")
+    List<ExamSchedule> findAllByExamDate(LocalDate targetDate);
 }

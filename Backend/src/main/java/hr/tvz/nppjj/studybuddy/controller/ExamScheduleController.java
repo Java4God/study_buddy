@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import hr.tvz.nppjj.studybuddy.dto.ExamScheduleDTO;
 import hr.tvz.nppjj.studybuddy.service.ExamScheduleService;
+import hr.tvz.nppjj.studybuddy.scheduler.ExamReminderScheduler;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 
@@ -29,6 +30,7 @@ import lombok.AllArgsConstructor;
 public class ExamScheduleController {
 
     private final ExamScheduleService examScheduleService;
+    private final ExamReminderScheduler examReminderScheduler;
 
     @GetMapping
     public Page<ExamScheduleDTO> getAllExams(Pageable pageable) {
@@ -59,5 +61,11 @@ public class ExamScheduleController {
     public ResponseEntity<Void> deleteExam(@PathVariable UUID id) {
         examScheduleService.deleteExam(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/test-reminder")
+    public ResponseEntity<String> triggerReminderScheduler() {
+        examReminderScheduler.sendExamReminders();
+        return ResponseEntity.ok("Exam reminder scheduler triggered manually. Check logs and email inbox.");
     }
 }
