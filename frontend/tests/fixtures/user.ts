@@ -106,7 +106,7 @@ export async function login({
       domain: "localhost",
       path: "/",
       httpOnly: true,
-      secure: true,
+      secure: false,
       sameSite: "Lax",
     },
   ]);

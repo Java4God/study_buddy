@@ -3,7 +3,7 @@ import { testWithExistingUser } from "../fixtures/user";
 
 testWithExistingUser("login test", async ({ page, user }) => {
   await page.goto("http://localhost:3000/login");
-
+  await page.waitForLoadState("networkidle");
   await page.getByLabel("Username").fill(user.username);
   await page.getByLabel("Password").fill(user.password);
   await page.getByRole("button", { name: "Sign In" }).click();
@@ -15,7 +15,7 @@ testWithExistingUser(
   "login with wrong email shows error",
   async ({ page, user }) => {
     await page.goto("/login");
-
+    await page.waitForLoadState("networkidle");
     //console.log("Fixture user:", user);
     await page.getByLabel("Username").fill(user.username);
     await page.getByLabel("Password").fill("wrong-password");
@@ -30,7 +30,7 @@ testWithExistingUser(
   "login with wrong username shows error",
   async ({ page, user }) => {
     await page.goto("/login");
-
+    await page.waitForLoadState("networkidle");
     //console.log("Fixture user:", user);
     await page.getByLabel("Username").fill("wrong-username");
     await page.getByLabel("Password").fill(user.password);
@@ -43,7 +43,7 @@ testWithExistingUser(
 
 testWithExistingUser("auto login test", async ({ page, user }) => {
   await page.goto("/login");
-
+  await page.waitForLoadState("networkidle");
   await page.getByLabel("Username").fill(user.username);
   await page.getByLabel("Password").fill(user.password);
 

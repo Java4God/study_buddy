@@ -31,9 +31,9 @@ export default defineConfig({
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
     trace: "on-first-retry",
     //remove later
-    headless: false,
+    headless: true,
     launchOptions: {
-      slowMo: 1000,
+      slowMo: 200,
     },
   },
 

@@ -5,10 +5,12 @@ testWithExistingUser(
   "add exam and verify it exists on page",
   async ({ page, user }) => {
     await login({ request: page.request, page, user });
+    await page.waitForLoadState("networkidle");
 
     await page.goto("/exams");
-
+    await page.waitForLoadState("networkidle");
     // Click "Add Exam" button to open modal
+    await expect(page.getByRole("button", { name: "Add Exam" })).toBeVisible();
     await page.getByRole("button", { name: "Add Exam" }).click();
 
     // Fill exam form
@@ -24,6 +26,7 @@ testWithExistingUser(
     await page.getByLabel("Notes").fill("Bring calculator");
 
     // Save exam
+    await expect(page.getByRole("button", { name: "Save" })).toBeVisible();
     await page.getByRole("button", { name: "Save" }).click();
 
     // Wait for modal to close and verify exam appears on page
@@ -37,9 +40,10 @@ testWithExistingUser(
   "add, update, and delete exam test",
   async ({ page, user }) => {
     await login({ request: page.request, page, user });
+    await page.waitForLoadState("networkidle");
 
     await page.goto("/exams");
-
+    await page.waitForLoadState("networkidle");
     // Add exam
     await page.getByRole("button", { name: "Add Exam" }).click();
 
@@ -102,9 +106,9 @@ testWithExistingUser(
   "add multiple exams and filter them test",
   async ({ page, user }) => {
     await login({ request: page.request, page, user });
-
+    await page.waitForLoadState("networkidle");
     await page.goto("/exams");
-
+    await page.waitForLoadState("networkidle");
     // Add first exam (upcoming)
     await page.getByRole("button", { name: "Add Exam" }).click();
 
@@ -143,9 +147,9 @@ testWithExistingUser(
   "update all exam fields and delete test",
   async ({ page, user }) => {
     await login({ request: page.request, page, user });
-
+    await page.waitForLoadState("networkidle");
     await page.goto("/exams");
-
+    await page.waitForLoadState("networkidle");
     // Create initial exam
     await page.getByRole("button", { name: "Add Exam" }).click();
 
@@ -216,10 +220,10 @@ testWithExistingUser(
   "create exam and verify it appears on dashboard",
   async ({ page, user }) => {
     await login({ request: page.request, page, user });
-
+    await page.waitForLoadState("networkidle");
     // Navigate to exams page
     await page.goto("/exams");
-
+    await page.waitForLoadState("networkidle");
     // Create an exam
     await page.getByRole("button", { name: "Add Exam" }).click();
 
