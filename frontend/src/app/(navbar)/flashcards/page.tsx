@@ -184,9 +184,7 @@ export default function FlashcardsPage() {
                   <p className="text-xs uppercase tracking-wide text-gray-500 mb-4">
                     Answer
                   </p>
-                  <p className="text-2xl text-indigo-600">
-                    {currentCard.back}
-                  </p>
+                  <p className="text-2xl text-indigo-600">{currentCard.back}</p>
                 </CardContent>
               </Card>
             </div>
@@ -256,9 +254,7 @@ export default function FlashcardsPage() {
               <div className="p-5 bg-indigo-50 rounded-3xl mb-4">
                 <BookOpen className="size-12 text-indigo-500" />
               </div>
-              <h3 className="text-xl mb-2 text-gray-700">
-                No flashcards yet
-              </h3>
+              <h3 className="text-xl mb-2 text-gray-700">No flashcards yet</h3>
               <p className="text-gray-500 mb-6 max-w-xs">
                 Create your first deck to start studying with spaced repetition!
               </p>
@@ -271,7 +267,7 @@ export default function FlashcardsPage() {
             decks.map((deck) => (
               <Card
                 key={deck.id}
-                className="hover:shadow-lg transition-shadow cursor-pointer"
+                className="border-1 rounded-md hover:shadow-lg transition-shadow cursor-pointer bg-white"
                 onClick={() => setSelectedDeck(deck.id)}
               >
                 <CardContent className="p-6">
@@ -310,14 +306,13 @@ export default function FlashcardsPage() {
           )}
         </div>
 
-        {/* Create Deck Modal */}
         <Dialog
           open={showCreateModal}
           onOpenChange={(open) => {
             if (!open) setShowCreateModal(false);
           }}
         >
-          <DialogContent className="max-w-md">
+          <DialogContent>
             <DialogHeader>
               <DialogTitle>Create New Deck</DialogTitle>
             </DialogHeader>
@@ -351,7 +346,10 @@ export default function FlashcardsPage() {
                   setValue={(value) => {
                     setNewDeckSubject(value);
                     if (formErrors.subject)
-                      setFormErrors((prev) => ({ ...prev, subject: undefined }));
+                      setFormErrors((prev) => ({
+                        ...prev,
+                        subject: undefined,
+                      }));
                   }}
                 />
                 {formErrors.subject && (
