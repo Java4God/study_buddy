@@ -3,6 +3,8 @@ package hr.tvz.nppjj.studybuddy.controller;
 import java.util.List;
 import java.util.UUID;
 
+import hr.tvz.nppjj.studybuddy.dto.WeeklyPomodoroDTO;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -12,6 +14,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import hr.tvz.nppjj.studybuddy.config.JwtService;
@@ -99,7 +102,7 @@ public class PomodoroSessionController {
     }
 
     @GetMapping("/week")
-    public ResponseEntity<List<hr.tvz.nppjj.studybuddy.dto.WeeklyPomodoroDTO>> getWeekTotals() {
+    public ResponseEntity<List<WeeklyPomodoroDTO>> getWeekTotals() {
         return ResponseEntity.ok(service.getWeeklyTotals());
     }
 
@@ -107,6 +110,17 @@ public class PomodoroSessionController {
             @NotBlank(message = "Token is required")
             String token
     ) {
+    }
+
+    @GetMapping("/heatmap")
+    public ResponseEntity<List<WeeklyPomodoroDTO>> getHeatmap(
+            @RequestParam
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+            java.time.LocalDate from,
+            @RequestParam
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+            java.time.LocalDate to) {
+        return ResponseEntity.ok(service.getHeatmapTotals(from, to));
     }
 
     public record PomodoroSessionTokenRequest(

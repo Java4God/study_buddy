@@ -132,6 +132,34 @@ public class PomodoroSessionServiceImpl implements PomodoroSessionService {
             .collect(Collectors.toList());
         }
 
+    @Override
+    public List<WeeklyPomodoroDTO> getHeatmapTotals(LocalDate from, LocalDate to) {
+        User currentUser = getCurrentUser();
+
+        if (from == null || to == null) {
+            throw new IllegalArgumentException("Both 'from' and 'to' dates are required");
+        }
+        if (from.isAfter(to)) {
+            throw new IllegalArgumentException("'from' date must be before or equal to 'to' date");
+        }
+
+        LocalDateTime start = from.atStartOfDay();
+        LocalDateTime end = to.atTime(LocalTime.MAX);
+
+        List<PomodoroSession> sessions =
+                repository.findByUserIdAndCompletedAtBetween(currentUser.getId(), start, end);
+
+        Map<LocalDate, Integer> grouped = sessions.stream()
+                .collect(Collectors.groupingBy(
+                        s -> s.getCompletedAt().toLocalDate(),
+                        Collectors.summingInt(PomodoroSession::getDurationMinutes)));
+
+        // vrati zapis za svaki dan u rasponu, i one s 0 minuta (heatmap treba sve dane)
+        return from.datesUntil(to.plusDays(1))
+                .map(d -> new WeeklyPomodoroDTO(d, grouped.getOrDefault(d, 0)))
+                .collect(Collectors.toList());
+    }
+
     private User getCurrentUser() {
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
         return userRepository.findUserByUsername(username)

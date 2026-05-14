@@ -1,5 +1,6 @@
 package hr.tvz.nppjj.studybuddy.controller;
 
+import hr.tvz.nppjj.studybuddy.scheduler.ExamReminderScheduler;
 import tools.jackson.databind.ObjectMapper;
 import tools.jackson.databind.json.JsonMapper;
 import hr.tvz.nppjj.studybuddy.config.JwtAuthenticationFilter;
@@ -48,7 +49,9 @@ class ExamScheduleControllerTest {
 
     @MockitoBean
     private ExamScheduleService examScheduleService;
-
+    @MockitoBean
+    private ExamReminderScheduler examReminderScheduler;
+    
     private ObjectMapper objectMapper;
     private UUID examId;
     private ExamScheduleDTO sampleDTO;
