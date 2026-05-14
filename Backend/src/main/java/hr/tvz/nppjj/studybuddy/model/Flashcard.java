@@ -2,6 +2,7 @@ package hr.tvz.nppjj.studybuddy.model;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -22,11 +23,11 @@ public class Flashcard {
     private String question;
     @NotBlank(message = "Answer must be entered")
     private String answer;
-    @NotBlank(message = "Repetition must be selected")
+    @NotNull(message = "Repetition must be selected")
     private Integer repetition;
-    @NotBlank(message = "Easiness must be entered")
+    @NotNull(message = "Easiness must be entered")
     private Float easiness;
     @Column(name = "next_review")
-    @NotBlank(message = "Next review date must be entered")
+    @NotNull(message = "Next review date must be entered")
     private LocalDate nextReview;
 }
