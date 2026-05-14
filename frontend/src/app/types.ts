@@ -12,6 +12,11 @@ export interface RawWeeklyProgressItem {
   totalMinutes: number;
 }
 
+export interface WeeklyPomodoroDTO {
+  date: string;
+  totalMinutes: number;
+}
+
 export interface WeeklyProgressItem {
   day: string;
   minutes: number;
