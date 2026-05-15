@@ -35,7 +35,7 @@ public class PasswordResetController {
     }
 
     @GetMapping("/latest-token")
-    @Profile("dev")
+    @Profile({"dev", "local"})
     public ResponseEntity<Map<String, String>> getLatestToken(@RequestParam String email) {
         return tokenRepository.findTopByUserEmailOrderByCreatedAtDesc(email)
                 .map(PasswordResetToken::getToken)
