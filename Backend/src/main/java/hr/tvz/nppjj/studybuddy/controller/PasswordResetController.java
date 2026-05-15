@@ -6,7 +6,10 @@ import hr.tvz.nppjj.studybuddy.service.PasswordResetService;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.context.annotation.Profile;
 import org.springframework.web.bind.annotation.*;
+import hr.tvz.nppjj.studybuddy.repository.PasswordResetTokenRepository;
+import hr.tvz.nppjj.studybuddy.model.PasswordResetToken;
 
 import java.util.Map;
 
@@ -17,6 +20,7 @@ import java.util.Map;
 public class PasswordResetController {
 
     private final PasswordResetService passwordResetService;
+    private final PasswordResetTokenRepository tokenRepository;
 
     @PostMapping("/request")
     public ResponseEntity<Map<String, String>> requestReset(@Valid @RequestBody PasswordResetRequestDTO dto) {
@@ -28,5 +32,14 @@ public class PasswordResetController {
     public ResponseEntity<Map<String, String>> confirmReset(@Valid @RequestBody PasswordResetConfirmDTO dto) {
         passwordResetService.confirmPasswordReset(dto);
         return ResponseEntity.ok(Map.of("message", "Password has been successfully reset"));
+    }
+
+    @GetMapping("/latest-token")
+    @Profile("dev")
+    public ResponseEntity<Map<String, String>> getLatestToken(@RequestParam String email) {
+        return tokenRepository.findTopByUserEmailOrderByCreatedAtDesc(email)
+                .map(PasswordResetToken::getToken)
+                .map(token -> ResponseEntity.ok(Map.of("token", token)))
+                .orElse(ResponseEntity.notFound().build());
     }
 }
