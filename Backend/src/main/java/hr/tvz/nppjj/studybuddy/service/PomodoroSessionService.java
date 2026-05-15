@@ -14,4 +14,5 @@ public interface PomodoroSessionService {
     PomodoroSessionDTO updateSession(UUID id, PomodoroSessionDTO dto);
     void deleteSession(UUID id);
     List<WeeklyPomodoroDTO> getWeeklyTotals();
+    List<WeeklyPomodoroDTO> getHeatmapTotals(java.time.LocalDate from, java.time.LocalDate to);
 }

@@ -48,7 +48,7 @@ public class TokenBlacklistService {
         return repository.existsByTokenHash(hash(token));
     }
 
-    private String hash(String token) {
+    String hash(String token) {
         try {
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
             byte[] bytes = digest.digest(token.getBytes());
