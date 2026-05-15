@@ -33,3 +33,12 @@ export enum PomodoroMode {
   SHORT_BREAK,
   LONG_BREAK,
 }
+
+export interface Flashcard {
+  id: string;
+  question: string;
+  answer: string;
+  repetition: number;
+  easiness: number;
+  nextReview: string; // ISO date YYYY-MM-DD
+}

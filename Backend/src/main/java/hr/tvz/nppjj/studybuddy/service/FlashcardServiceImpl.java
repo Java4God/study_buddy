@@ -51,7 +51,8 @@ public class FlashcardServiceImpl implements FlashcardService{
     }
 
     private FlashcardDTO toDto(Flashcard flashcard){
-        return new FlashcardDTO(flashcard.getQuestion(),
+        return new FlashcardDTO(flashcard.getId(),
+                flashcard.getQuestion(),
                 flashcard.getAnswer(),
                 flashcard.getRepetition(),
                 flashcard.getEasiness(),
