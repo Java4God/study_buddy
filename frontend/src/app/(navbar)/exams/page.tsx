@@ -397,12 +397,14 @@ export default function ExamScheduler() {
                             <button
                               className=" p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-100 rounded-full"
                               onClick={() => openEdit(exam.id)}
+                              data-testid={`edit-btn-exam-${exam.subjectName}`}
                             >
                               <Pencil className="size-4" color="blue" />
                             </button>
                             <button
                               className=" p-2 text-slate-400 hover:text-red-600 hover:bg-red-100 rounded-full"
                               onClick={() => setExamToDelete(exam.id)}
+                              data-testid={`delete-btn-exam-${exam.subjectName}`}
                             >
                               <Trash2 className="size-4" color="red" />
                             </button>
