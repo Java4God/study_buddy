@@ -184,4 +184,14 @@ class ExamScheduleControllerTest {
                         .content(objectMapper.writeValueAsString(ulaz)))
                 .andExpect(status().isOk());
     }
+
+    @Test
+    @DisplayName("POST /exams/test-reminder - 200 OK i poziva scheduler")
+    void triggerReminderScheduler_vraca200IPozivaScheduler() throws Exception {
+        // when + then
+        mockMvc.perform(post("/exams/test-reminder"))
+                .andExpect(status().isOk());
+
+        verify(examReminderScheduler).sendExamReminders();
+    }
 }
