@@ -5,6 +5,7 @@ import { Card, CardContent } from "../../components/card";
 import { Tabs, TabsList, TabsTrigger } from "../../components/tabs";
 import { Play, Pause, RotateCcw, Coffee, Brain } from "lucide-react";
 import Button from "@/app/components/button";
+import PomodoroHeatmap from "../../components/pomodoro-heatmap";
 
 type TimerMode = "focus" | "short" | "long";
 type ApiPomodoroMode = "FOCUS" | "SHORT_BREAK" | "LONG_BREAK";
@@ -104,7 +105,7 @@ const TimerPage = () => {
 
   useEffect(() => {
     loadSessions();
-  }, []);
+  }, [loadSessions]);
 
   useEffect(() => {
     if (isRunning && timeLeft > 0) {
@@ -302,7 +303,7 @@ const TimerPage = () => {
               ) : null}
             </CardContent>
           </Card>
-          <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-4 flex-1">
             <Card>
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
@@ -375,6 +376,8 @@ const TimerPage = () => {
             </Card>
           </div>
         </div>
+
+        <PomodoroHeatmap />
       </div>
     </div>
   );
