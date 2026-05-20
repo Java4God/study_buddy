@@ -31,7 +31,6 @@ testWithExistingUser(
   async ({ page, user }) => {
     await page.goto("/register");
     await page.waitForLoadState("networkidle");
-    //console.log("Fixture user:", user);
     await page.getByLabel("Username").fill(user.username);
     await page.getByLabel("Email").fill(user.email);
     await page.getByTestId("password-input").fill(user.password);

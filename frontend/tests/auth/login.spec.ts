@@ -16,7 +16,6 @@ testWithExistingUser(
   async ({ page, user }) => {
     await page.goto("/login");
     await page.waitForLoadState("networkidle");
-    //console.log("Fixture user:", user);
     await page.getByLabel("Username").fill(user.username);
     await page.getByLabel("Password").fill("wrong-password");
 
@@ -31,7 +30,6 @@ testWithExistingUser(
   async ({ page, user }) => {
     await page.goto("/login");
     await page.waitForLoadState("networkidle");
-    //console.log("Fixture user:", user);
     await page.getByLabel("Username").fill("wrong-username");
     await page.getByLabel("Password").fill(user.password);
 
