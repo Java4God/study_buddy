@@ -39,7 +39,6 @@ export const testWithExistingUser = base.extend<{
     try {
       const body = await createdResp.json();
       accessToken = (body as RegisterResponse).access_token;
-      //console.log("Register response:", body);
     } catch (e) {
       console.error("Register response: (no json body)");
     }
@@ -53,7 +52,6 @@ export const testWithExistingUser = base.extend<{
         if (meResp.ok()) {
           const meJson = await meResp.json();
           createdUserId = meJson?.uuid ?? meJson?.id ?? undefined;
-          //console.log("Fetched current user:", meJson);
         } else {
           console.error("Failed to fetch current user, status:", meResp.status);
         }
@@ -73,7 +71,6 @@ export const testWithExistingUser = base.extend<{
             ? { Authorization: `Bearer ${accessToken}` }
             : {},
         });
-        //console.log("Deleted test user id:", createdUserId);
       } catch (e) {
         console.error("Failed to delete test user:", e);
       }

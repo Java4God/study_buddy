@@ -49,7 +49,6 @@ export const calculateWeeklyProgress = (
 };
 
 export const calculateTotalProgress = (rawTotal: PomodoroSession[]) => {
-  console.log("Raw total progress:", rawTotal);
   const totalMinutes = rawTotal.reduce(
     (sum, item) => sum + (item.durationMinutes ?? 0),
     0,

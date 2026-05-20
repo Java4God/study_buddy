@@ -22,7 +22,6 @@ async function fetchTotal(accessToken: string, id: string) {
 export async function GET(req: Request) {
   const url = new URL(req.url);
   const id = url.searchParams.get("id");
-  console.log("Fetching total progress for user id:", id);
   if (!id) {
     return jsonError("Missing user id", 400);
   }
