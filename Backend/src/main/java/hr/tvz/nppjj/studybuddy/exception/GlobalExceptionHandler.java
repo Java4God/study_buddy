@@ -47,4 +47,22 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
                 .body(Map.of("error", e.getMessage()));
     }
+
+    @ExceptionHandler(RoomNotFoundException.class)
+    public ResponseEntity<Map<String, String>> handleRoomNotFound(RoomNotFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(Map.of("error", ex.getMessage()));
+    }
+
+    @ExceptionHandler(RoomMembershipException.class)
+    public ResponseEntity<Map<String, String>> handleRoomMembership(RoomMembershipException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(Map.of("error", ex.getMessage()));
+    }
+
+    @ExceptionHandler(RoomAccessException.class)
+    public ResponseEntity<Map<String, String>> handleRoomAccess(RoomAccessException ex) {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                .body(Map.of("error", ex.getMessage()));
+    }
 }
