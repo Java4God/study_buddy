@@ -6,7 +6,6 @@ import java.util.UUID;
 import hr.tvz.nppjj.studybuddy.requests.UpdateUserRequest;
 import hr.tvz.nppjj.studybuddy.service.TokenBlacklistService;
 import hr.tvz.nppjj.studybuddy.utils.TokenUserResolver;
-import jakarta.validation.constraints.NotBlank;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;

@@ -24,7 +24,6 @@ import org.springframework.http.MediaType;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.boot.test.mock.web.*;
 
 import java.util.List;
 import java.util.Optional;
@@ -52,7 +51,7 @@ class UserControllerTest {
     @MockitoBean
     JwtService jwtService;
     @MockitoBean
-    TokenBlacklistService  tokenBlacklistService;
+    TokenBlacklistService tokenBlacklistService;
     @MockitoBean
     UserDetailsService userDetailsService;
     @MockitoBean
