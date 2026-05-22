@@ -4,6 +4,7 @@ import hr.tvz.nppjj.studybuddy.dto.RoomMemberDTO;
 import hr.tvz.nppjj.studybuddy.dto.StudyRoomDTO;
 import hr.tvz.nppjj.studybuddy.requests.CreateRoomRequest;
 import hr.tvz.nppjj.studybuddy.requests.UpdateStatusRequest;
+import hr.tvz.nppjj.studybuddy.service.PresenceService;
 import hr.tvz.nppjj.studybuddy.service.StudyRoomService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -14,6 +15,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 @RestController
@@ -22,6 +24,7 @@ import java.util.UUID;
 public class StudyRoomController {
 
     private final StudyRoomService studyRoomService;
+    private final PresenceService presenceService;
 
     @PostMapping("/new")
     public ResponseEntity<StudyRoomDTO> createRoom(
@@ -82,5 +85,10 @@ public class StudyRoomController {
             @AuthenticationPrincipal UserDetails userDetails) {
         RoomMemberDTO member = studyRoomService.updateMemberStatus(id, userDetails.getUsername(), request.status());
         return ResponseEntity.ok(member);
+    }
+
+    @GetMapping("/{id}/presence")
+    public ResponseEntity<Set<String>> getOnlinePresence(@PathVariable UUID id) {
+        return ResponseEntity.ok(presenceService.getOnlineUsers(id));
     }
 }
