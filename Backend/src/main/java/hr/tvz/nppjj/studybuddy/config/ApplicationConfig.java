@@ -33,6 +33,7 @@ public class ApplicationConfig{
                         .requestMatchers("/users/logout").permitAll()
                         .requestMatchers("/password-reset/**").permitAll()
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html").permitAll()
+                        .requestMatchers("/ws/**").permitAll() // handshake; STOMP CONNECT autorizira interceptor
                         .requestMatchers("/users").hasRole("ADMIN")
                         .requestMatchers("/admin/**").hasRole("ADMIN")
                         .requestMatchers("/users/**").authenticated()

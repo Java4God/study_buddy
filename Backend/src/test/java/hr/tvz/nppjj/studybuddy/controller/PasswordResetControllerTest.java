@@ -3,7 +3,6 @@ package hr.tvz.nppjj.studybuddy.controller;
 import hr.tvz.nppjj.studybuddy.config.JwtService;
 import hr.tvz.nppjj.studybuddy.dto.PasswordResetConfirmDTO;
 import hr.tvz.nppjj.studybuddy.dto.PasswordResetRequestDTO;
-import hr.tvz.nppjj.studybuddy.dto.UserDTO;
 import hr.tvz.nppjj.studybuddy.enumerators.Role;
 import hr.tvz.nppjj.studybuddy.model.PasswordResetToken;
 import hr.tvz.nppjj.studybuddy.model.User;
@@ -27,7 +26,6 @@ import java.time.LocalDateTime;
 import java.util.Optional;
 import java.util.UUID;
 
-import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
