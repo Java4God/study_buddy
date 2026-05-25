@@ -17,6 +17,7 @@ test("register logout login test", async ({ page }) => {
   await page.getByText("Logout").click();
 
   await expect(page).toHaveURL("http://localhost:3000/login");
+  await page.waitForLoadState("networkidle");
 
   await page.getByLabel("Username").fill(user.username);
   await page.getByLabel("Password").fill(user.password);

@@ -98,7 +98,7 @@ testWithExistingUser(
     await confirmButton.click();
 
     // Verify exam is deleted
-    await expect(page.getByText(updatedSubject)).not.toBeVisible();
+    await expect(page.getByText("Lab A")).not.toBeVisible();
   },
 );
 
