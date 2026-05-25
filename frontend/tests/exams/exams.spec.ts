@@ -212,7 +212,7 @@ testWithExistingUser(
     }
 
     // Verify exam is deleted
-    await expect(page.locator(`text=${updatedSubject}`)).not.toBeVisible();
+    await expect(page.locator(`text=Lab C`)).not.toBeVisible();
   },
 );
 
@@ -245,7 +245,9 @@ testWithExistingUser(
     await page.goto("/dashboard");
 
     // Verify the exam appears in the "Upcoming Exams" section on dashboard
-    await expect(page.getByText("Upcoming Exams")).toBeVisible();
+    await expect(
+      page.getByRole("heading", { name: "Upcoming Exams" }),
+    ).toBeVisible();
     await expect(page.getByText(examSubject)).toBeVisible();
   },
 );
