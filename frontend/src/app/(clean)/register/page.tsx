@@ -11,6 +11,7 @@ import { useRouter } from "next/navigation";
 import Input from "@/app/components/input";
 import Link from "next/link";
 import axios from "axios";
+import { Pages, Api } from "@/app/routes";
 import {
   validateEmail,
   validatePassword,
@@ -111,8 +112,8 @@ const RegisterPage = () => {
     setLoading(true);
 
     try {
-      await axios.post("/api/auth/register", { username, email, password });
-      router.push("/dashboard");
+      await axios.post(`${Api.AUTH}/register`, { username, email, password });
+      router.push(Pages.DASHBOARD);
     } catch (error) {
       if (axios.isAxiosError(error)) {
         const status = error.response?.status;
