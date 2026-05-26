@@ -9,7 +9,7 @@ import {
 
 export async function POST(
   _req: Request,
-  { params }: { params: { id: string } },
+  { params }: { params: Promise<{ id: string }> },
 ) {
   const { id } = await params;
   console.log("Joining room with id:", id);

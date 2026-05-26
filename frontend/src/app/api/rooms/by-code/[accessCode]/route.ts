@@ -9,9 +9,9 @@ import {
 
 export async function GET(
   _req: Request,
-  { params }: { params: { accessCode: string } },
+  { params }: { params: Promise<{ accessCode: string }> },
 ) {
-  const { accessCode } = params;
+  const { accessCode } = await params;
   if (!accessCode) return jsonError("Missing access code", 400);
 
   let accessToken = await getAuthorizedToken();

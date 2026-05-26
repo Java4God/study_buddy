@@ -9,7 +9,7 @@ import {
 
 export async function PUT(
   req: Request,
-  { params }: { params: { id: string } },
+  { params }: { params: Promise<{ id: string }> },
 ) {
   const { id } = await params;
   if (!id) return jsonError("Missing room id", 400);

@@ -10,10 +10,13 @@ type ButtonVariant =
   | "ghost"
   | "outline";
 
+type ButtonSize = "sm" | "md";
+
 interface ButtonProps {
   label?: string;
   onClick?: () => void;
   variant?: ButtonVariant;
+  size?: ButtonSize;
   disabled?: boolean;
   style?: CSSProperties;
   className?: string;
@@ -22,6 +25,11 @@ interface ButtonProps {
 }
 const base =
   "inline-flex items-center justify-center gap-1.5 px-5 py-2.5 rounded-lg text-sm font-semibold tracking-wide border-2 cursor-pointer select-none whitespace-nowrap transition-all duration-150 outline-none focus-visible:ring-2 focus-visible:ring-offset-2 active:scale-95";
+
+const sizes: Record<ButtonSize, string> = {
+  sm: "px-3 py-1.5 text-xs",
+  md: "px-5 py-2.5 text-sm",
+};
 
 const variants: Record<ButtonVariant, string> = {
   normal:
@@ -43,6 +51,7 @@ export default function Button({
   label = "",
   onClick,
   variant = "normal",
+  size = "md",
   disabled = false,
   style,
   className = "",
@@ -55,6 +64,7 @@ export default function Button({
       style={style}
       className={[
         base,
+        sizes[size],
         variants[variant],
         disabled ? disabledClass : "",
         className,

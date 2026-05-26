@@ -4,7 +4,7 @@ import { callExternal, buildUrl, jsonError, extractMessage } from "../_shared";
 
 export async function GET(
   _req: Request,
-  { params }: { params: { id: string } },
+  { params }: { params: Promise<{ id: string }> },
 ) {
   const { id } = await params;
   let accessToken = await getAuthorizedToken();
@@ -36,7 +36,7 @@ export async function GET(
 
 export async function DELETE(
   _req: Request,
-  { params }: { params: { id: string } },
+  { params }: { params: Promise<{ id: string }> },
 ) {
   const { id } = await params;
   let accessToken = await getAuthorizedToken();
