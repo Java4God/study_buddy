@@ -3,23 +3,24 @@ import axios from "axios";
 import { BookOpen } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { Pages, Api } from "@/app/routes";
 
 const navItems = [
-  { path: "/dashboard", label: "Dashboard" },
-  { path: "/timer", label: "Timer" },
-  { path: "/rooms", label: "Rooms" },
-  { path: "/flashcards", label: "Flashcards" },
-  { path: "/exams", label: "Exams" },
-  { path: "/ai-assistant", label: "AI Assistant" },
-  { path: "/profile/me", label: "Profile" },
+  { path: Pages.DASHBOARD, label: "Dashboard" },
+  { path: Pages.TIMER, label: "Timer" },
+  { path: Pages.ROOMS, label: "Rooms" },
+  { path: Pages.FLASHCARDS, label: "Flashcards" },
+  { path: Pages.EXAMS, label: "Exams" },
+  { path: Pages.ASSISTANT, label: "AI Assistant" },
+  { path: Pages.PROFILE_ME, label: "Profile" },
 ];
 
 const Navbar = () => {
   const router = useRouter();
 
   const logout = async () => {
-    await axios.post("/api/auth/logout");
-    router.push("/login");
+    await axios.post(`${Api.AUTH}/logout`);
+    router.push(Pages.LOGIN);
   };
 
   return (

@@ -1,8 +1,9 @@
 import axios from "axios";
+import { Api } from "@/app/routes";
 import { Flashcard } from "@/app/types";
 
 export async function getAllFlashcards(): Promise<Flashcard[]> {
-  const res = await axios.get<Flashcard[]>(`/api/flashcards`);
+  const res = await axios.get<Flashcard[]>(Api.FLASHCARDS);
   if (res.status !== 200) return [];
   return res.data;
 }
@@ -18,7 +19,7 @@ export async function createFlashcard(
     easiness: 2.5,
     nextReview: new Date().toISOString().split("T")[0],
   };
-  const res = await axios.post(`/api/flashcards`, payload);
+  const res = await axios.post(Api.FLASHCARDS, payload);
   if (res.status !== 200) return null;
   return res.data as Flashcard;
 }
@@ -32,11 +33,11 @@ export async function updateFlashcard(
   answer: string,
 ) {
   const payload = { repetition, easiness, nextReview, question, answer };
-  await axios.put(`/api/flashcards?id=${id}`, payload);
+  await axios.put(`${Api.FLASHCARDS}?id=${id}`, payload);
 }
 
 export async function deleteFlashcard(id: string) {
-  await axios.delete(`/api/flashcards?id=${id}`);
+  await axios.delete(`${Api.FLASHCARDS}?id=${id}`);
 }
 
 export function calculateSM2(

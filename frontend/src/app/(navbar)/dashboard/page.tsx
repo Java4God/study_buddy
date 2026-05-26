@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 
 import Link from "next/link";
+import { Pages, Api } from "@/app/routes";
 import {
   Card,
   CardContent,
@@ -35,7 +36,7 @@ function getDaysUntil(dateStr: string): number {
 
 async function getUpcomingExams(): Promise<Exam[]> {
   try {
-    const response = await axios.get<Exam[]>(`/api/exam/next`);
+    const response = await axios.get<Exam[]>(`${Api.EXAM}/next`);
 
     if (response.status !== 200) {
       return [];
@@ -96,7 +97,7 @@ export default function DashboardPage() {
   useEffect(() => {
     const fetchWeeklyProgress = async () => {
       try {
-        await fetch(`/api/timer/week`, {})
+        await fetch(`${Api.TIMER}/week`, {})
           .then((r) => r.json())
           .then((w) => weeklyProgressProcess(w))
           .catch((e) => {
@@ -131,7 +132,12 @@ export default function DashboardPage() {
         icon: <Layers className="size-6 text-green-800" />,
         bgColor: "#c1e1c1",
       },
-      { label: "Day Streak", value: todayStats["Day Streak"], icon: <Flame className="size-6 text-orange-800" />, bgColor: "#ffe4b5" },
+      {
+        label: "Day Streak",
+        value: todayStats["Day Streak"],
+        icon: <Flame className="size-6 text-orange-800" />,
+        bgColor: "#ffe4b5",
+      },
     ];
   }, [todayStats]);
 
@@ -171,25 +177,25 @@ export default function DashboardPage() {
             <CardTitle>Quick Actions</CardTitle>
           </CardHeader>
           <CardContent className="flex flex-wrap gap-3 flow-row">
-            <Link href="/timer">
+            <Link href={Pages.TIMER}>
               <button className="gap-2 border-1 rounded-md p-2 flex items-center ">
                 <Timer className="size-4" />
                 <p>Start Timer</p>
               </button>
             </Link>
-            <Link href="/ai-assistant">
+            <Link href={Pages.ASSISTANT}>
               <button className="gap-2 border-1 rounded-md p-2 flex items-center ">
                 <Sparkles className="size-4" />
                 <p>Ask AI Assistant</p>
               </button>
             </Link>
-            <Link href="/rooms">
+            <Link href={Pages.ROOMS}>
               <button className="gap-2 border-1 rounded-md p-2 flex items-center ">
                 <Users className="size-4" />
                 <p>Join Study Room</p>
               </button>
             </Link>
-            <Link href="/flashcards">
+            <Link href={Pages.FLASHCARDS}>
               <button className="gap-2 border-1 rounded-md p-2 flex items-center ">
                 <Layers className="size-4" />
                 <p>Review Flashcards</p>
@@ -248,7 +254,7 @@ export default function DashboardPage() {
                     No upcoming exams found.
                   </p>
                 ) : null}
-                <Link href="/exams">
+                <Link href={Pages.EXAMS}>
                   <button className="w-full">View All Exams</button>
                 </Link>
               </div>

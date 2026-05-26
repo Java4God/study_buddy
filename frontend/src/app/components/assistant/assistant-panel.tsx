@@ -10,34 +10,28 @@ import Composer from "./Composer";
 import assistantDemoMessages from "./assistant-demo";
 import { useAssistantConversation } from "../../hooks/useAssistantConversation";
 import Button from "../button";
-import { useState } from "react";
+import { useState, useRef } from "react";
 
 export default function AssistantPanel() {
   const { messages, draft, setDraft, isSending, sendMessage } =
     useAssistantConversation(assistantDemoMessages as any);
   const [uploading, setUploading] = useState(false);
 
-  async function handleFileUpload(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    const form = e.currentTarget;
-    const input = form.querySelector(
-      "input[type=file]",
-    ) as HTMLInputElement | null;
-    if (!input || !input.files || input.files.length === 0) return;
-    const file = input.files[0];
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  async function uploadFile(file: File | null) {
+    if (!file) return;
     const fd = new FormData();
     fd.append("file", file);
     setUploading(true);
     try {
       await fetch("/api/files", { method: "POST", body: fd });
-      // show minimal success message in chat
       sendMessage(`I uploaded file: ${file.name}` as unknown as string);
     } catch (err) {
-      // show error in chat
       sendMessage(`Failed to upload file: ${file.name}` as unknown as string);
     } finally {
       setUploading(false);
-      if (input) input.value = "";
+      if (fileInputRef.current) fileInputRef.current.value = "";
     }
   }
 
@@ -50,31 +44,58 @@ export default function AssistantPanel() {
       </CardHeader>
 
       <CardContent className="flex-1 flex flex-col p-0">
-        <ScrollArea className="flex-1 p-6">
+        <ScrollArea className="p-6">
           <div className="space-y-6">
-            {messages.map((m: any) => (
-              <ChatMessage
-                key={m.id}
-                id={m.id}
-                role={m.role}
-                content={m.content}
-                timestamp={m.timestamp}
-              />
-            ))}
 
-            {isSending && <TypingIndicator />}
+            <div className="overflow-auto h-[60vh] p-2">
+              <div className="space-y-6">
+                {messages.map((m: any) => (
+                  <ChatMessage
+                    key={m.id}
+                    id={m.id}
+                    role={m.role}
+                    content={m.content}
+                    timestamp={m.timestamp}
+                  />
+                ))}
+
+                {isSending && <TypingIndicator />}
+
+                <div />
+              </div>
+            </div>
           </div>
         </ScrollArea>
 
         {messages.length <= 1 && <QuickPrompts onSelect={(q) => setDraft(q)} />}
 
         <div className="px-6 pb-4">
-          <form onSubmit={handleFileUpload} className="flex items-center gap-2">
-            <input type="file" name="file" className="" />
-            <Button type="submit" disabled={uploading} className="gap-2">
+          <div className="flex items-center gap-2">
+            <input
+              ref={fileInputRef}
+              type="file"
+              name="file"
+              accept=".pdf,.txt,application/pdf,text/plain"
+              className="hidden"
+              onChange={(e) => {
+                const file = e.target.files?.[0] ?? null;
+                uploadFile(file);
+              }}
+            />
+            <p className="text-sm text-gray-600">
+              You can upload PDF or TXT files to generate practice questions
+              from the document. Select a file and it will be processed
+              automatically.
+            </p>
+            <Button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={uploading}
+              className="gap-2"
+            >
               {uploading ? "Uploading..." : "Add file"}
             </Button>
-          </form>
+          </div>
         </div>
 
         <Composer

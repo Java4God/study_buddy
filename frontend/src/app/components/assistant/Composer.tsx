@@ -23,7 +23,7 @@ export default function Composer({
           value={value}
           setValue={setValue}
           placeholder="Ask me anything about studying..."
-          className="flex-1"
+          wrapperClassName="flex-1"
           disabled={disabled}
         />
         <Button

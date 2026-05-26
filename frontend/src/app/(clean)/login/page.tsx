@@ -19,6 +19,7 @@ import {
   DialogTrigger,
 } from "@/app/components/dialogs";
 import axios from "axios";
+import { Pages, Api } from "@/app/routes";
 import { BookOpen } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -47,11 +48,11 @@ export default function LoginPage() {
 
     setLoading(true);
     try {
-      await axios.post("/api/auth/login", {
+      await axios.post(`${Api.AUTH}/login`, {
         username,
         password,
       });
-      router.push("/dashboard");
+      router.push(Pages.DASHBOARD);
     } catch (error) {
       setError("Invalid username or password");
     } finally {
@@ -79,7 +80,7 @@ export default function LoginPage() {
     setResetMessage("");
 
     try {
-      const response = await fetch("/api/password-reset/request", {
+      const response = await fetch(`${Api.PASSWORD_RESET}/request`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: resetEmail.trim() }),
@@ -204,7 +205,10 @@ export default function LoginPage() {
           </div>
           <div className="mt-4 text-center text-sm text-gray-600">
             Dont have an account?{" "}
-            <Link href="/register" className="text-indigo-600 hover:underline">
+            <Link
+              href={Pages.REGISTER}
+              className="text-indigo-600 hover:underline"
+            >
               Sign up
             </Link>
           </div>

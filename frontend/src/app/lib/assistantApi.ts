@@ -1,6 +1,7 @@
 import { AssistantChatPayload, AssistantMessage } from "../types/assistant";
+import { Api } from "@/app/routes";
 
-const DEFAULT_ASSISTANT_ENDPOINT = "/api/assistant";
+const DEFAULT_ASSISTANT_ENDPOINT = Api.ASSISTANT;
 
 export class AssistantApiError extends Error {
   status?: number;
