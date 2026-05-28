@@ -1,6 +1,7 @@
 package hr.tvz.nppjj.studybuddy.controller;
 
 import hr.tvz.nppjj.studybuddy.dto.ChatMessageDTO;
+import hr.tvz.nppjj.studybuddy.model.CustomUserDetails;
 import hr.tvz.nppjj.studybuddy.service.ChatService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -23,7 +24,7 @@ public class ChatRestController {
     public ResponseEntity<List<ChatMessageDTO>> getRecent(
             @PathVariable UUID roomId,
             @RequestParam(defaultValue = "50") int limit,
-            @AuthenticationPrincipal UserDetails userDetails) {
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
         return ResponseEntity.ok(chatService.getRecentMessages(roomId, userDetails.getUsername(), limit));
     }
 
@@ -32,7 +33,7 @@ public class ChatRestController {
             @PathVariable UUID roomId,
             @RequestParam LocalDateTime before,
             @RequestParam(defaultValue = "50") int limit,
-            @AuthenticationPrincipal UserDetails userDetails) {
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
         return ResponseEntity.ok(chatService.getOlderMessages(roomId, userDetails.getUsername(), before, limit));
     }
 }
