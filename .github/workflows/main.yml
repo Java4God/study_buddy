@@ -147,18 +147,13 @@ jobs:
         working-directory: ./frontend
         run: npx playwright install --with-deps
 
-      - name: Wait for backend to be ready
+      - name: Wait for Postgres
         run: |
           for i in {1..30}; do
-            if curl -f http://localhost:8080/actuator/health 2>/dev/null | grep -q "UP"; then
-              echo "Backend is ready"
-              exit 0
-            fi
-            echo "Waiting for backend... ($i/30)"
+            pg_isready -h localhost -p 5432 && exit 0
+            echo "Waiting for Postgres... ($i/30)"
             sleep 2
           done
-          echo "Backend failed to start"
-          cat /tmp/backend.log
           exit 1
 
       - name: Run Playwright tests
