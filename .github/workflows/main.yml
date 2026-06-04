@@ -6,8 +6,26 @@ on:
   pull_request:
     branches: [main, master, feat/cicd-fe-testing]
 
+env:
+  BACKEND_DIR: ./Backend
+  FRONTEND_DIR: ./frontend
+  JAVA_VERSION: "25"
+  NODE_VERSION: lts/*
+  POSTGRES_DB: studybuddy
+  POSTGRES_USER: postgres
+  POSTGRES_PASSWORD: postgres
+  PGHOST: localhost
+  PGPORT: "5432"
+  PGDATABASE: studybuddy
+  PGUSER: postgres
+  PGPASSWORD: postgres
+  API_DOMAIN: http://localhost:8080/
+  APP_FRONTEND_URL: http://localhost:3000
+  PLAYWRIGHT_BASE_URL: http://localhost:3000
+
 jobs:
   backend-tests:
+    name: Backend tests
     timeout-minutes: 30
     runs-on: ubuntu-latest
 
@@ -18,8 +36,8 @@ jobs:
           POSTGRES_DB: studybuddy
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres
-        options: >
-          --health-cmd pg_isready
+        options: >-
+          --health-cmd "pg_isready -U postgres -d studybuddy"
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
@@ -27,147 +45,139 @@ jobs:
           - 5432:5432
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-      - name: Set up Java 25
+      - name: Set up Java
         uses: actions/setup-java@v4
         with:
-          java-version: "25"
-          distribution: "temurin"
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: temurin
           cache: maven
 
-      - name: Make mvnw executable
-        working-directory: ./Backend
+      - name: Make Maven wrapper executable
+        working-directory: ${{ env.BACKEND_DIR }}
         run: chmod +x ./mvnw
 
-      - name: Run backend tests with PostgreSQL
-        working-directory: ./Backend
-        run: ./mvnw -X clean test -Dspring.profiles.active=ci 2>&1 | tee test-output.log
-        env:
-          PGHOST: localhost
-          PGPORT: 5432
-          PGDATABASE: studybuddy
-          PGUSER: postgres
-          PGPASSWORD: postgres
-          APP_FRONTEND_URL: http://localhost:3000
-
-      - name: Flag skipped tests for review
-        if: always()
-        run: |
-          echo "⚠️ SKIPPED TESTS - TODO: Fix these before production"
-          echo "=================================================="
-          echo "1. ChatRestControllerTest (4 tests)"
-          echo "   - Issue: User authentication null in mocked tests"
-          echo "   - Fix: Mock SecurityContext properly for REST endpoints"
-          echo ""
-          echo "2. ChatServiceImplTest (2 tests)"
-          echo "   - Issue: UnsupportedOperationException on list reversal"
-          echo "   - Fix: Ensure test data collections support reversal"
-          echo ""
-          echo "See Backend/target/surefire-reports/ for detailed test results"
+      - name: Run backend tests
+        working-directory: ${{ env.BACKEND_DIR }}
+        run: ./mvnw clean test -Dspring.profiles.active=ci
 
       - name: Generate JaCoCo coverage report
-        working-directory: ./Backend
-        run: ./mvnw -X jacoco:report
-        env:
-          PGHOST: localhost
-          PGPORT: 5432
-          PGDATABASE: studybuddy
-          PGUSER: postgres
-          PGPASSWORD: postgres
+        working-directory: ${{ env.BACKEND_DIR }}
+        run: ./mvnw jacoco:report
 
       - name: Upload JaCoCo coverage report
-        uses: actions/upload-artifact@v4
         if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
         with:
           name: jacoco-report
           path: Backend/target/site/jacoco/
           retention-days: 30
 
   frontend-tests:
+    name: Frontend Playwright tests
     needs: backend-tests
     timeout-minutes: 60
     runs-on: ubuntu-latest
 
-    steps:
-      - uses: actions/checkout@v4
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_DB: studybuddy
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        options: >-
+          --health-cmd "pg_isready -U postgres -d studybuddy"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
 
-      - name: Set up Java 25
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Java
         uses: actions/setup-java@v4
         with:
-          java-version: "25"
-          distribution: "temurin"
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: temurin
           cache: maven
 
-      - name: Build backend JAR
-        working-directory: ./Backend
-        run: |
-          chmod +x ./mvnw
-          ./mvnw -X clean package -DskipTests
-        env:
-          PGHOST: localhost
-          PGPORT: 5432
-          PGDATABASE: studybuddy
-          PGUSER: postgres
-          PGPASSWORD: postgres
-
-      - name: Start backend server in background
-        working-directory: ./Backend
-        run: |
-          java -jar target/*.jar \
-            --spring.profiles.active=ci \
-            --debug \
-            --logging.level.org.springframework.boot.autoconfigure=DEBUG \
-            > /tmp/backend.log 2>&1 &
-          sleep 15
-          echo "Backend started"
-          if ! curl -f http://localhost:8080/actuator/health 2>/dev/null; then
-            echo "WARNING: Backend health check failed. Showing logs:"
-            cat /tmp/backend.log | tail -50
-          fi
-        env:
-          PGHOST: localhost
-          PGPORT: 5432
-          PGDATABASE: studybuddy
-          PGUSER: postgres
-          PGPASSWORD: postgres
-          APP_FRONTEND_URL: http://localhost:3000
-
-      - uses: actions/setup-node@v4
+      - name: Set up Node
+        uses: actions/setup-node@v4
         with:
-          node-version: lts/*
+          node-version: ${{ env.NODE_VERSION }}
           cache: npm
           cache-dependency-path: frontend/package-lock.json
 
-      - name: Install frontend dependencies
-        working-directory: ./frontend
-        run: npm ci
+      - name: Make Maven wrapper executable
+        working-directory: ${{ env.BACKEND_DIR }}
+        run: chmod +x ./mvnw
 
-      - name: Install Playwright Browsers
-        working-directory: ./frontend
-        run: npx playwright install --with-deps
+      - name: Build backend JAR
+        working-directory: ${{ env.BACKEND_DIR }}
+        run: ./mvnw clean package -DskipTests
 
-      - name: Wait for Postgres
+      - name: Start backend server
+        working-directory: ${{ env.BACKEND_DIR }}
         run: |
-          for i in {1..30}; do
-            pg_isready -h localhost -p 5432 && exit 0
-            echo "Waiting for Postgres... ($i/30)"
+          java -jar target/*.jar > /tmp/backend.log 2>&1 &
+          echo $! > /tmp/backend.pid
+        env:
+          SPRING_PROFILES_ACTIVE: ci
+
+      - name: Wait for backend
+        run: |
+          for i in {1..60}; do
+            status="$(curl --silent --output /dev/null --write-out '%{http_code}' http://localhost:8080/users || true)"
+
+            if [ "$status" != "000" ]; then
+              echo "Backend is listening on port 8080 (HTTP $status)."
+              exit 0
+            fi
+
+            if ! kill -0 "$(cat /tmp/backend.pid)" 2>/dev/null; then
+              echo "Backend process exited before it became ready."
+              tail -100 /tmp/backend.log
+              exit 1
+            fi
+
+            echo "Waiting for backend... ($i/60)"
             sleep 2
           done
+
+          echo "Backend did not become ready in time."
+          tail -100 /tmp/backend.log
           exit 1
 
+      - name: Install frontend dependencies
+        working-directory: ${{ env.FRONTEND_DIR }}
+        run: npm ci
+
+      - name: Install Playwright browsers
+        working-directory: ${{ env.FRONTEND_DIR }}
+        run: npx playwright install --with-deps
+
       - name: Run Playwright tests
-        working-directory: ./frontend
+        working-directory: ${{ env.FRONTEND_DIR }}
         run: npx playwright test
 
       - name: Upload Playwright report
-        uses: actions/upload-artifact@v4
         if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
         with:
           name: playwright-report
           path: frontend/playwright-report/
           retention-days: 30
 
-      - name: Upload backend logs if tests failed
+      - name: Upload backend logs
         if: failure()
-        run: cat /tmp/backend.log
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-log
+          path: /tmp/backend.log
+          retention-days: 30
