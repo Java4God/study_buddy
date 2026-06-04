@@ -27,7 +27,7 @@ jobs:
 
       - name: Run backend tests with H2
         working-directory: ./Backend
-        run: ./mvnw clean test
+        run: ./mvnw clean test -Dspring.profiles.active=test
 
       - name: Generate JaCoCo coverage report
         working-directory: ./Backend
