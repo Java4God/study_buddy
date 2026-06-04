@@ -1,50 +1,41 @@
-package hr.tvz.nppjj.studybuddy.scheduler;
+package hr.tvz.nppjj.studybuddy.service;
 
 import hr.tvz.nppjj.studybuddy.model.ExamSchedule;
 import hr.tvz.nppjj.studybuddy.repository.ExamScheduleRepository;
-import hr.tvz.nppjj.studybuddy.service.EmailService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.scheduling.annotation.Scheduled;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.List;
 
-@Component
+@Service
 @RequiredArgsConstructor
 @Slf4j
-public class ExamReminderScheduler {
+public class ExamReminderServiceImpl implements ExamReminderService {
 
     private final ExamScheduleRepository examScheduleRepository;
     private final EmailService emailService;
 
-    /**
-     * Salje email podsjetnik svaki dan u 9:00 ujutro za ispite koji su za 3 dana.
-     * Cron format: sekunde minute sati dan-u-mjesecu mjesec dan-u-tjednu
-     */
-    @Scheduled(cron = "0 0 9 * * *")
+    @Override
     @Transactional(readOnly = true)
-    public void sendExamReminders() {
-        LocalDate targetDate = LocalDate.now().plusDays(3);
-        log.info("Running exam reminder scheduler for date: {}", targetDate);
+    public int sendRemindersForExamsWithin(int daysAhead) {
+        LocalDate targetDate = LocalDate.now().plusDays(daysAhead);
+        log.info("Slanje podsjetnika za ispite na datum: {}", targetDate);
 
         List<ExamSchedule> upcomingExams = examScheduleRepository.findAllByExamDate(targetDate);
-
         if (upcomingExams.isEmpty()) {
-            log.info("No exams found for {}, skipping reminder emails", targetDate);
-            return;
+            log.info("Nema ispita za {}, preskačem", targetDate);
+            return 0;
         }
 
-        log.info("Found {} exams for {}, sending reminders", upcomingExams.size(), targetDate);
-
+        int sent = 0;
         for (ExamSchedule exam : upcomingExams) {
             if (exam.getUser() == null || exam.getUser().getEmail() == null) {
-                log.warn("Exam {} has no user or email, skipping", exam.getId());
+                log.warn("Exam {} nema usera ili email, preskačem", exam.getId());
                 continue;
             }
-
             emailService.sendExamReminderEmail(
                     exam.getUser().getEmail(),
                     exam.getSubjectName(),
@@ -52,8 +43,9 @@ public class ExamReminderScheduler {
                     exam.getExamTime(),
                     exam.getLocation()
             );
+            sent++;
         }
-
-        log.info("Exam reminder scheduler completed");
+        log.info("Poslano {} podsjetnika za {}", sent, targetDate);
+        return sent;
     }
 }

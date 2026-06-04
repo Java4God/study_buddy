@@ -1,6 +1,6 @@
 package hr.tvz.nppjj.studybuddy.controller;
 
-import hr.tvz.nppjj.studybuddy.scheduler.ExamReminderScheduler;
+import hr.tvz.nppjj.studybuddy.service.ExamReminderService;
 import tools.jackson.databind.ObjectMapper;
 import tools.jackson.databind.json.JsonMapper;
 import hr.tvz.nppjj.studybuddy.config.JwtAuthenticationFilter;
@@ -50,7 +50,7 @@ class ExamScheduleControllerTest {
     @MockitoBean
     private ExamScheduleService examScheduleService;
     @MockitoBean
-    private ExamReminderScheduler examReminderScheduler;
+    private ExamReminderService examReminderService;
     
     private ObjectMapper objectMapper;
     private UUID examId;
@@ -186,12 +186,11 @@ class ExamScheduleControllerTest {
     }
 
     @Test
-    @DisplayName("POST /exams/test-reminder - 200 OK i poziva scheduler")
-    void triggerReminderScheduler_vraca200IPozivaScheduler() throws Exception {
-        // when + then
+    @DisplayName("POST /exams/test-reminder - 200 OK i poziva servis")
+    void triggerReminderScheduler_vraca200IPozivaServis() throws Exception {
         mockMvc.perform(post("/exams/test-reminder"))
                 .andExpect(status().isOk());
 
-        verify(examReminderScheduler).sendExamReminders();
+        verify(examReminderService).sendRemindersForExamsWithin(3);
     }
 }
