@@ -2,7 +2,7 @@ name: Full Stack Tests with Coverage
 
 on:
   push:
-    branches: [main, master]
+    branches: [main, master, feat/cicd-fe-testing]
   pull_request:
     branches: [main, master, feat/cicd-fe-testing]
 
