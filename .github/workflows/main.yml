@@ -2,9 +2,9 @@ name: Full Stack Tests with Coverage
 
 on:
   push:
-    branches: [main, master, feat/cicd-fe-testing]
+    branches: [main, master]
   pull_request:
-    branches: [main, master, feat/cicd-fe-testing]
+    branches: [main, master]
 
 env:
   BACKEND_DIR: ./Backend
