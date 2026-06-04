@@ -11,6 +11,21 @@ jobs:
     timeout-minutes: 30
     runs-on: ubuntu-latest
 
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_DB: studybuddy
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        options: >
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
     steps:
       - uses: actions/checkout@v4
 
@@ -25,9 +40,16 @@ jobs:
         working-directory: ./Backend
         run: chmod +x ./mvnw
 
-      - name: Run backend tests with H2
+      - name: Run backend tests with PostgreSQL
         working-directory: ./Backend
-        run: ./mvnw -X clean test -Dspring.profiles.active=test 2>&1 | tee test-output.log
+        run: ./mvnw -X clean test -Dspring.profiles.active=ci 2>&1 | tee test-output.log
+        env:
+          PGHOST: localhost
+          PGPORT: 5432
+          PGDATABASE: studybuddy
+          PGUSER: postgres
+          PGPASSWORD: postgres
+          APP_FRONTEND_URL: http://localhost:3000
 
       - name: Flag skipped tests for review
         if: always()
@@ -47,6 +69,12 @@ jobs:
       - name: Generate JaCoCo coverage report
         working-directory: ./Backend
         run: ./mvnw -X jacoco:report
+        env:
+          PGHOST: localhost
+          PGPORT: 5432
+          PGDATABASE: studybuddy
+          PGUSER: postgres
+          PGPASSWORD: postgres
 
       - name: Upload JaCoCo coverage report
         uses: actions/upload-artifact@v4
@@ -76,13 +104,26 @@ jobs:
         run: |
           chmod +x ./mvnw
           ./mvnw -X clean package -DskipTests
+        env:
+          PGHOST: localhost
+          PGPORT: 5432
+          PGDATABASE: studybuddy
+          PGUSER: postgres
+          PGPASSWORD: postgres
 
       - name: Start backend server in background
         working-directory: ./Backend
         run: |
-          java -jar target/*.jar --spring.profiles.active=test > /tmp/backend.log 2>&1 &
+          java -jar target/*.jar --spring.profiles.active=ci > /tmp/backend.log 2>&1 &
           sleep 10
           echo "Backend started"
+        env:
+          PGHOST: localhost
+          PGPORT: 5432
+          PGDATABASE: studybuddy
+          PGUSER: postgres
+          PGPASSWORD: postgres
+          APP_FRONTEND_URL: http://localhost:3000
 
       - uses: actions/setup-node@v4
         with:
