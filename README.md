@@ -18,7 +18,8 @@ TVZ · Akademska godina 2025./2026.
 - Spring Mail
 - Next.js
 - Maven
-
+- Vercel
+- Railway
 ---
 
 ## Status projekta
