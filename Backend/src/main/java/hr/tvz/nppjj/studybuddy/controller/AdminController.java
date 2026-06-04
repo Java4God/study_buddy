@@ -3,12 +3,17 @@ package hr.tvz.nppjj.studybuddy.controller;
 import hr.tvz.nppjj.studybuddy.dto.UserDTO;
 import hr.tvz.nppjj.studybuddy.service.UserService;
 import lombok.AllArgsConstructor;
+import org.quartz.JobKey;
+import org.quartz.Scheduler;
+import org.quartz.SchedulerException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -20,6 +25,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class AdminController {
 
     private final UserService userService;
+    private final Scheduler scheduler;
 
     @GetMapping("/users")
     public Page<UserDTO> getAllUsers(Pageable pageable) {
@@ -30,5 +36,15 @@ public class AdminController {
     public ResponseEntity<String> getStats() {
         long totalUsers = userService.getUsers(Pageable.unpaged()).getTotalElements();
         return ResponseEntity.ok("Total users: " + totalUsers);
+    }
+
+    @PostMapping("/jobs/{name}/trigger")
+    public ResponseEntity<String> triggerJob(@PathVariable String name) throws SchedulerException {
+        JobKey key = JobKey.jobKey(name);
+        if (!scheduler.checkExists(key)) {
+            return ResponseEntity.notFound().build();
+        }
+        scheduler.triggerJob(key);
+        return ResponseEntity.ok("Okinut posao: " + name);
     }
 }

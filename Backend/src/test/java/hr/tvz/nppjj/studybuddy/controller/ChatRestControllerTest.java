@@ -4,6 +4,7 @@ import hr.tvz.nppjj.studybuddy.config.JwtService;
 import hr.tvz.nppjj.studybuddy.dto.ChatMessageDTO;
 import hr.tvz.nppjj.studybuddy.service.ChatService;
 import hr.tvz.nppjj.studybuddy.service.TokenBlacklistService;
+import hr.tvz.nppjj.studybuddy.support.WithMockCustomUser;
 import hr.tvz.nppjj.studybuddy.utils.TokenUserResolver;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -13,7 +14,6 @@ import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -26,6 +26,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @WebMvcTest(ChatRestController.class)
 @AutoConfigureMockMvc(addFilters = false)
+@WithMockCustomUser
 class ChatRestControllerTest {
 
     @Autowired
@@ -64,8 +65,7 @@ class ChatRestControllerTest {
         when(chatService.getRecentMessages(roomId, "testuser", 50))
                 .thenReturn(List.of(messageDto));
 
-        mockMvc.perform(get("/rooms/{roomId}/messages", roomId)
-                        .with(user("testuser")))
+        mockMvc.perform(get("/rooms/{roomId}/messages", roomId))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].roomId").value(roomId.toString()))
                 .andExpect(jsonPath("$[0].senderUsername").value("testuser"))
@@ -80,7 +80,6 @@ class ChatRestControllerTest {
                 .thenReturn(List.of(messageDto));
 
         mockMvc.perform(get("/rooms/{roomId}/messages", roomId)
-                        .with(user("testuser"))
                         .param("limit", "10"))
                 .andExpect(status().isOk());
 
@@ -95,7 +94,6 @@ class ChatRestControllerTest {
                 .thenReturn(List.of(messageDto));
 
         mockMvc.perform(get("/rooms/{roomId}/messages/before", roomId)
-                        .with(user("testuser"))
                         .param("before", "2026-05-28T18:00:00"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].content").value("Hello world"));
@@ -111,7 +109,6 @@ class ChatRestControllerTest {
                 .thenReturn(List.of(messageDto));
 
         mockMvc.perform(get("/rooms/{roomId}/messages/before", roomId)
-                        .with(user("testuser"))
                         .param("before", "2026-05-28T18:00:00")
                         .param("limit", "5"))
                 .andExpect(status().isOk());

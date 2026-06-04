@@ -17,6 +17,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
@@ -56,8 +57,8 @@ public class ChatServiceImpl implements ChatService {
     @Transactional(readOnly = true)
     public List<ChatMessageDTO> getRecentMessages(UUID roomId, String username, int limit) {
         validateMembership(roomId, username);
-        List<ChatMessage> messages = chatMessageRepository.findAllByRoomIdOrderBySentAtDesc(
-                roomId, PageRequest.of(0, limit));
+        List<ChatMessage> messages = new ArrayList<>(chatMessageRepository.findAllByRoomIdOrderBySentAtDesc(
+                roomId, PageRequest.of(0, limit)));
         Collections.reverse(messages); // chronološki ascending za prikaz
         return messages.stream().map(this::toDTO).toList();
     }
@@ -66,8 +67,8 @@ public class ChatServiceImpl implements ChatService {
     @Transactional(readOnly = true)
     public List<ChatMessageDTO> getOlderMessages(UUID roomId, String username, LocalDateTime before, int limit) {
         validateMembership(roomId, username);
-        List<ChatMessage> messages = chatMessageRepository.findOlderMessages(
-                roomId, before, PageRequest.of(0, limit));
+        List<ChatMessage> messages = new ArrayList<>(chatMessageRepository.findOlderMessages(
+                roomId, before, PageRequest.of(0, limit)));
         Collections.reverse(messages);
         return messages.stream().map(this::toDTO).toList();
     }
