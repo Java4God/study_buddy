@@ -27,7 +27,7 @@ jobs:
 
       - name: Run backend tests with H2
         working-directory: ./Backend
-        run: ./mvnw clean test -Dspring.profiles.active=test -Dskip.chat.tests=true 2>&1 | tee test-output.log
+        run: ./mvnw -X clean test -Dspring.profiles.active=test 2>&1 | tee test-output.log
 
       - name: Flag skipped tests for review
         if: always()
@@ -46,7 +46,7 @@ jobs:
 
       - name: Generate JaCoCo coverage report
         working-directory: ./Backend
-        run: ./mvnw jacoco:report
+        run: ./mvnw -X jacoco:report
 
       - name: Upload JaCoCo coverage report
         uses: actions/upload-artifact@v4
@@ -75,7 +75,7 @@ jobs:
         working-directory: ./Backend
         run: |
           chmod +x ./mvnw
-          ./mvnw clean package -DskipTests -q
+          ./mvnw -X clean package -DskipTests
 
       - name: Start backend server in background
         working-directory: ./Backend
