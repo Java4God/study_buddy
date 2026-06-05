@@ -13,4 +13,5 @@ public interface ChatService {
     List<ChatMessageDTO> getRecentMessages(UUID roomId, String username, int limit);
 
     List<ChatMessageDTO> getOlderMessages(UUID roomId, String username, LocalDateTime before, int limit);
+    int purgeMessagesOlderThanDays(int days);
 }

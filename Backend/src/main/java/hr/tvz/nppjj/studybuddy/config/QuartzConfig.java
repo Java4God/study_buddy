@@ -1,6 +1,7 @@
 package hr.tvz.nppjj.studybuddy.config;
 
 import hr.tvz.nppjj.studybuddy.scheduler.ExamReminderJob;
+import hr.tvz.nppjj.studybuddy.scheduler.PurgeOldChatMessagesJob;
 import hr.tvz.nppjj.studybuddy.scheduler.RevokedTokenCleanupJob;
 import org.quartz.*;
 import org.springframework.context.annotation.Bean;
@@ -47,6 +48,23 @@ public class QuartzConfig {
                         .withIntervalInMinutes(15)
                         .repeatForever()
                         .withMisfireHandlingInstructionNextWithRemainingCount())
+                .build();
+    }
+
+    @Bean
+    public JobDetail purgeOldChatMessagesJobDetail() {
+        return JobBuilder.newJob(PurgeOldChatMessagesJob.class)
+                .withIdentity("purgeOldChatMessagesJob", "chat")
+                .storeDurably()
+                .build();
+    }
+
+    @Bean
+    public Trigger purgeOldChatMessagesTrigger(JobDetail purgeOldChatMessagesJobDetail) {
+        return TriggerBuilder.newTrigger()
+                .forJob(purgeOldChatMessagesJobDetail)
+                .withIdentity("purgeOldChatMessagesTrigger", "chat")
+                .withSchedule(CronScheduleBuilder.cronSchedule("0 0 0 1 10 ?"))
                 .build();
     }
 }

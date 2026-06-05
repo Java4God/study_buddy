@@ -8,6 +8,7 @@ import hr.tvz.nppjj.studybuddy.service.UserService;
 import hr.tvz.nppjj.studybuddy.utils.TokenUserResolver;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.quartz.JobKey;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
@@ -23,8 +24,9 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(controllers = AdminController.class)
@@ -72,5 +74,28 @@ class AdminControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.TEXT_PLAIN))
                 .andExpect(content().string("Total users: 1"));
+    }
+
+    @Test
+    void triggerJob_returnsOk_whenJobExists() throws Exception {
+        when(scheduler.checkExists(JobKey.jobKey("purgeOldChatMessagesJob"))).thenReturn(true);
+
+        mockMvc.perform(post("/admin/jobs/{name}/trigger", "purgeOldChatMessagesJob"))
+                .andExpect(status().isOk())
+                .andExpect(content().string("Okinut posao: purgeOldChatMessagesJob"));
+
+        verify(scheduler).checkExists(JobKey.jobKey("purgeOldChatMessagesJob"));
+        verify(scheduler).triggerJob(JobKey.jobKey("purgeOldChatMessagesJob"));
+    }
+
+    @Test
+    void triggerJob_returnsNotFound_whenJobDoesNotExist() throws Exception {
+        when(scheduler.checkExists(JobKey.jobKey("missingJob"))).thenReturn(false);
+
+        mockMvc.perform(post("/admin/jobs/{name}/trigger", "missingJob"))
+                .andExpect(status().isNotFound());
+
+        verify(scheduler).checkExists(JobKey.jobKey("missingJob"));
+        verify(scheduler, never()).triggerJob(any(JobKey.class));
     }
 }
