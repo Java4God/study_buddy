@@ -213,4 +213,14 @@ class ChatServiceImplTest {
                 .isInstanceOf(ChatAccessException.class)
                 .hasMessage("You are not a member of this room");
     }
+
+    @Test
+    void purgeMessagesOlderThanDays_returnsRepositoryResult() {
+        when(chatMessageRepository.deleteAllOlderThan(any(LocalDateTime.class))).thenReturn(7);
+
+        int result = chatService.purgeMessagesOlderThanDays(365);
+
+        assertThat(result).isEqualTo(7);
+        verify(chatMessageRepository).deleteAllOlderThan(any(LocalDateTime.class));
+    }
 }
