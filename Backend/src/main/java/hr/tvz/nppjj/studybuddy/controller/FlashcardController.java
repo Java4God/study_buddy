@@ -3,6 +3,7 @@ package hr.tvz.nppjj.studybuddy.controller;
 import java.util.List;
 import java.util.UUID;
 
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -22,10 +23,13 @@ import lombok.AllArgsConstructor;
 
 @RestController
 @RequestMapping("flashcards")
-@AllArgsConstructor
 @CrossOrigin(origins = "http://localhost:3000")
 public class FlashcardController {
-    FlashcardService flashcardService;
+    private final FlashcardService flashcardService;
+
+    public FlashcardController(@Qualifier("db") FlashcardService flashcardService) {
+        this.flashcardService = flashcardService;
+    }
 
     @GetMapping("/{uuid}")
     public ResponseEntity<FlashcardDTO> getById(@PathVariable UUID uuid){

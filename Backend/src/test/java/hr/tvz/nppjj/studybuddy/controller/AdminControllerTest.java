@@ -2,6 +2,7 @@ package hr.tvz.nppjj.studybuddy.controller;
 
 import hr.tvz.nppjj.studybuddy.config.JwtService;
 import hr.tvz.nppjj.studybuddy.dto.UserDTO;
+import hr.tvz.nppjj.studybuddy.service.AllUsersService;
 import hr.tvz.nppjj.studybuddy.service.TokenBlacklistService;
 import hr.tvz.nppjj.studybuddy.service.UserService;
 import hr.tvz.nppjj.studybuddy.utils.TokenUserResolver;
@@ -33,7 +34,7 @@ class AdminControllerTest {
     @Autowired
     MockMvc mockMvc;
     @MockitoBean
-    UserService userService;
+    AllUsersService userService;
     @MockitoBean
     JwtService jwtService;
     @MockitoBean

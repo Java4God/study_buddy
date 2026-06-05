@@ -13,11 +13,10 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-public interface UserService {
+public interface UserService extends SuperUserService{
     Optional<UserDTO> getUserByEmail(String email);
     Optional<UserDTO> getUserByUsername(String username);
     Optional<UserDTO> getUserById(UUID uuid);
-    Page<UserDTO> getUsers(Pageable pageable);
     Optional<UserDTO> newUser(User user);
     Optional<UserDTO> updateUser(UUID uuid, UpdateUserRequest user);
     void deleteUser(UUID uuid);

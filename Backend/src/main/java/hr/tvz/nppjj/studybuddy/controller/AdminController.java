@@ -1,8 +1,10 @@
 package hr.tvz.nppjj.studybuddy.controller;
 
 import hr.tvz.nppjj.studybuddy.dto.UserDTO;
+import hr.tvz.nppjj.studybuddy.service.AllUsersService;
 import hr.tvz.nppjj.studybuddy.service.UserService;
 import lombok.AllArgsConstructor;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
@@ -18,8 +20,7 @@ import org.springframework.web.bind.annotation.RestController;
 @CrossOrigin(origins = "http://localhost:3000")
 @PreAuthorize("hasRole('ADMIN')")
 public class AdminController {
-
-    private final UserService userService;
+    private AllUsersService userService;
 
     @GetMapping("/users")
     public Page<UserDTO> getAllUsers(Pageable pageable) {
