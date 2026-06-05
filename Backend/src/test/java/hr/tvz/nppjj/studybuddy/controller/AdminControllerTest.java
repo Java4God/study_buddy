@@ -43,6 +43,8 @@ class AdminControllerTest {
     TokenBlacklistService tokenBlacklistService;
     @MockitoBean
     TokenUserResolver tokenUserResolver;
+    @MockitoBean
+    private org.quartz.Scheduler scheduler;
     private UserDTO userDTO;
 
     @BeforeEach

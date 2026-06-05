@@ -1,19 +1,22 @@
 package hr.tvz.nppjj.studybuddy.controller;
 
-import hr.tvz.nppjj.studybuddy.config.JwtService;
 import hr.tvz.nppjj.studybuddy.dto.ChatMessageDTO;
+import hr.tvz.nppjj.studybuddy.enumerators.Role;
+import hr.tvz.nppjj.studybuddy.model.CustomUserDetails;
+import hr.tvz.nppjj.studybuddy.model.User;
 import hr.tvz.nppjj.studybuddy.service.ChatService;
-import hr.tvz.nppjj.studybuddy.service.TokenBlacklistService;
-import hr.tvz.nppjj.studybuddy.utils.TokenUserResolver;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
-import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
-import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -24,8 +27,9 @@ import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@WebMvcTest(ChatRestController.class)
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureMockMvc(addFilters = false)
+@ActiveProfiles("test")
 class ChatRestControllerTest {
 
     @Autowired
@@ -33,15 +37,6 @@ class ChatRestControllerTest {
 
     @MockitoBean
     private ChatService chatService;
-
-    @MockitoBean
-    JwtService jwtService;
-    @MockitoBean
-    UserDetailsService userDetailsService;
-    @MockitoBean
-    TokenBlacklistService tokenBlacklistService;
-    @MockitoBean
-    TokenUserResolver tokenUserResolver;
 
     private UUID roomId;
     private ChatMessageDTO messageDto;
@@ -57,6 +52,22 @@ class ChatRestControllerTest {
                 "Hello world",
                 LocalDateTime.of(2026, 5, 28, 18, 30)
         );
+
+        User userEntity = new User();
+        userEntity.setUsername("testuser");
+        userEntity.setRole(Role.ROLE_BASIC_USER);
+        CustomUserDetails principal = new CustomUserDetails(userEntity);
+
+        UsernamePasswordAuthenticationToken auth =
+                new UsernamePasswordAuthenticationToken(principal, null, principal.getAuthorities());
+        SecurityContext context = SecurityContextHolder.createEmptyContext();
+        context.setAuthentication(auth);
+        SecurityContextHolder.setContext(context);
+    }
+
+    @AfterEach
+    void tearDown() {
+        SecurityContextHolder.clearContext();
     }
 
     @Test
@@ -64,8 +75,7 @@ class ChatRestControllerTest {
         when(chatService.getRecentMessages(roomId, "testuser", 50))
                 .thenReturn(List.of(messageDto));
 
-        mockMvc.perform(get("/rooms/{roomId}/messages", roomId)
-                        .with(user("testuser")))
+        mockMvc.perform(get("/rooms/{roomId}/messages", roomId))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].roomId").value(roomId.toString()))
                 .andExpect(jsonPath("$[0].senderUsername").value("testuser"))
@@ -80,7 +90,6 @@ class ChatRestControllerTest {
                 .thenReturn(List.of(messageDto));
 
         mockMvc.perform(get("/rooms/{roomId}/messages", roomId)
-                        .with(user("testuser"))
                         .param("limit", "10"))
                 .andExpect(status().isOk());
 
@@ -95,7 +104,6 @@ class ChatRestControllerTest {
                 .thenReturn(List.of(messageDto));
 
         mockMvc.perform(get("/rooms/{roomId}/messages/before", roomId)
-                        .with(user("testuser"))
                         .param("before", "2026-05-28T18:00:00"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].content").value("Hello world"));
@@ -111,7 +119,6 @@ class ChatRestControllerTest {
                 .thenReturn(List.of(messageDto));
 
         mockMvc.perform(get("/rooms/{roomId}/messages/before", roomId)
-                        .with(user("testuser"))
                         .param("before", "2026-05-28T18:00:00")
                         .param("limit", "5"))
                 .andExpect(status().isOk());

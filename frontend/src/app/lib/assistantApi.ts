@@ -1,8 +1,6 @@
 import { AssistantChatPayload, AssistantMessage } from "../types/assistant";
 import { Api } from "@/app/routes";
 
-const DEFAULT_ASSISTANT_ENDPOINT = Api.ASSISTANT;
-
 export class AssistantApiError extends Error {
   status?: number;
 
@@ -15,7 +13,7 @@ export class AssistantApiError extends Error {
 
 function createMessageId() {
   if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
-    return (crypto as any).randomUUID();
+    return crypto.randomUUID();
   }
 
   return `assistant-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
@@ -47,16 +45,10 @@ function extractText(data: unknown): string | null {
   return null;
 }
 
-function getAssistantEndpoint() {
-  return (
-    process.env.NEXT_PUBLIC_ASSISTANT_API_URL ?? DEFAULT_ASSISTANT_ENDPOINT
-  );
-}
-
 export async function sendAssistantMessage(
   payload: AssistantChatPayload,
 ): Promise<AssistantMessage> {
-  const response = await fetch(getAssistantEndpoint(), {
+  const response = await fetch(Api.ASSISTANT, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({

@@ -1,0 +1,192 @@
+name: Full Stack Tests with Coverage
+
+permissions:
+  contents: read
+  statuses: write
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+env:
+  BACKEND_DIR: ./Backend
+  FRONTEND_DIR: ./frontend
+  JAVA_VERSION: "25"
+  NODE_VERSION: lts/*
+  POSTGRES_DB: studybuddy
+  POSTGRES_USER: postgres
+  POSTGRES_PASSWORD: postgres
+  PGHOST: localhost
+  PGPORT: "5432"
+  PGDATABASE: studybuddy
+  PGUSER: postgres
+  PGPASSWORD: postgres
+  API_DOMAIN: http://localhost:8080/
+  APP_FRONTEND_URL: http://localhost:3000
+  PLAYWRIGHT_BASE_URL: http://localhost:3000
+
+jobs:
+  backend-tests:
+    name: Backend tests
+    timeout-minutes: 30
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_DB: studybuddy
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        options: >-
+          --health-cmd "pg_isready -U postgres -d studybuddy"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: temurin
+          cache: maven
+
+      - name: Make Maven wrapper executable
+        working-directory: ${{ env.BACKEND_DIR }}
+        run: chmod +x ./mvnw
+
+      - name: Run backend tests
+        working-directory: ${{ env.BACKEND_DIR }}
+        run: ./mvnw clean test -Dspring.profiles.active=ci
+
+      - name: Generate JaCoCo coverage report
+        working-directory: ${{ env.BACKEND_DIR }}
+        run: ./mvnw jacoco:report
+
+      - name: Upload JaCoCo coverage report
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: jacoco-report
+          path: Backend/target/site/jacoco/
+          retention-days: 30
+
+  frontend-tests:
+    name: Frontend Playwright tests
+    needs: backend-tests
+    timeout-minutes: 60
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_DB: studybuddy
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        options: >-
+          --health-cmd "pg_isready -U postgres -d studybuddy"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: temurin
+          cache: maven
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Make Maven wrapper executable
+        working-directory: ${{ env.BACKEND_DIR }}
+        run: chmod +x ./mvnw
+
+      - name: Build backend JAR
+        working-directory: ${{ env.BACKEND_DIR }}
+        run: ./mvnw clean package -DskipTests
+
+      - name: Start backend server
+        working-directory: ${{ env.BACKEND_DIR }}
+        run: |
+          java -jar target/*.jar > /tmp/backend.log 2>&1 &
+          echo $! > /tmp/backend.pid
+        env:
+          SPRING_PROFILES_ACTIVE: ci
+
+      - name: Wait for backend
+        run: |
+          for i in {1..60}; do
+            status="$(curl --silent --output /dev/null --write-out '%{http_code}' http://localhost:8080/users || true)"
+
+            if [ "$status" != "000" ]; then
+              echo "Backend is listening on port 8080 (HTTP $status)."
+              exit 0
+            fi
+
+            if ! kill -0 "$(cat /tmp/backend.pid)" 2>/dev/null; then
+              echo "Backend process exited before it became ready."
+              tail -100 /tmp/backend.log
+              exit 1
+            fi
+
+            echo "Waiting for backend... ($i/60)"
+            sleep 2
+          done
+
+          echo "Backend did not become ready in time."
+          tail -100 /tmp/backend.log
+          exit 1
+
+      - name: Install frontend dependencies
+        working-directory: ${{ env.FRONTEND_DIR }}
+        run: npm ci
+
+      - name: Install Playwright browsers
+        working-directory: ${{ env.FRONTEND_DIR }}
+        run: npx playwright install --with-deps
+
+      - name: Run Playwright tests
+        working-directory: ${{ env.FRONTEND_DIR }}
+        run: npx playwright test
+
+      - name: Upload Playwright report
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: frontend/playwright-report/
+          retention-days: 30
+
+      - name: Upload backend logs
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-log
+          path: /tmp/backend.log
+          retention-days: 30
+
+      - name: Notify Vercel
+        uses: vercel/repository-dispatch/actions/status@v1
+        with:
+          name: "Vercel - study-buddy: lint"

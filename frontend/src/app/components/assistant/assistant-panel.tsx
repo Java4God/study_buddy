@@ -5,34 +5,20 @@ import { Card, CardContent, CardHeader, CardTitle } from "../card";
 import { ScrollArea } from "../scroll-area";
 import ChatMessage from "./ChatMessage";
 import TypingIndicator from "./TypingIndicator";
-import QuickPrompts from "./QuickPrompts";
 import Composer from "./Composer";
-import assistantDemoMessages from "./assistant-demo";
 import { useAssistantConversation } from "../../hooks/useAssistantConversation";
 import Button from "../button";
-import { useState, useRef } from "react";
+import { useRef } from "react";
 
 export default function AssistantPanel() {
-  const { messages, draft, setDraft, isSending, sendMessage } =
-    useAssistantConversation(assistantDemoMessages as any);
-  const [uploading, setUploading] = useState(false);
+  const { messages, draft, setDraft, isSending, sendMessage, uploadFile } =
+    useAssistantConversation([]);
 
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
-  async function uploadFile(file: File | null) {
-    if (!file) return;
-    const fd = new FormData();
-    fd.append("file", file);
-    setUploading(true);
-    try {
-      await fetch("/api/files", { method: "POST", body: fd });
-      sendMessage(`I uploaded file: ${file.name}` as unknown as string);
-    } catch (err) {
-      sendMessage(`Failed to upload file: ${file.name}` as unknown as string);
-    } finally {
-      setUploading(false);
-      if (fileInputRef.current) fileInputRef.current.value = "";
-    }
+  async function handleFileUpload(file: File | null) {
+    await uploadFile(file);
+    if (fileInputRef.current) fileInputRef.current.value = "";
   }
 
   return (
@@ -49,7 +35,7 @@ export default function AssistantPanel() {
 
             <div className="overflow-auto h-[60vh] p-2">
               <div className="space-y-6">
-                {messages.map((m: any) => (
+                {messages.map((m) => (
                   <ChatMessage
                     key={m.id}
                     id={m.id}
@@ -67,8 +53,6 @@ export default function AssistantPanel() {
           </div>
         </ScrollArea>
 
-        {messages.length <= 1 && <QuickPrompts onSelect={(q) => setDraft(q)} />}
-
         <div className="px-6 pb-4">
           <div className="flex items-center gap-2">
             <input
@@ -79,7 +63,7 @@ export default function AssistantPanel() {
               className="hidden"
               onChange={(e) => {
                 const file = e.target.files?.[0] ?? null;
-                uploadFile(file);
+                handleFileUpload(file);
               }}
             />
             <p className="text-sm text-gray-600">
@@ -90,10 +74,10 @@ export default function AssistantPanel() {
             <Button
               type="button"
               onClick={() => fileInputRef.current?.click()}
-              disabled={uploading}
+              disabled={isSending}
               className="gap-2"
             >
-              {uploading ? "Uploading..." : "Add file"}
+              {isSending ? "Working..." : "Add file"}
             </Button>
           </div>
         </div>

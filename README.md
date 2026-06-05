@@ -24,4 +24,4 @@ TVZ · Akademska godina 2025./2026.
 
 ## Status projekta
 
-🚧 U razvoju
+🚧 U razvoju / testira se
