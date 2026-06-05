@@ -16,18 +16,25 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.core.Authentication;
 
 import hr.tvz.nppjj.studybuddy.config.JwtService;
 import hr.tvz.nppjj.studybuddy.dto.PomodoroSessionDTO;
 import hr.tvz.nppjj.studybuddy.enumerators.PomodoroMode;
 import hr.tvz.nppjj.studybuddy.service.PomodoroSessionService;
 import hr.tvz.nppjj.studybuddy.service.UserService;
+import hr.tvz.nppjj.studybuddy.service.WeeklyPomodoroSummaryService;
 import hr.tvz.nppjj.studybuddy.utils.TokenUserResolver;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
+
+import java.time.LocalDate;
+
+import static hr.tvz.nppjj.studybuddy.utils.WeeklyPomodoroSummaryUtil.resolveWeekStart;
+import static hr.tvz.nppjj.studybuddy.utils.WeeklyPomodoroSummaryUtil.weekEnd;
 
 @RestController
 @RequestMapping("/pomodoro-sessions")
@@ -38,6 +45,7 @@ public class PomodoroSessionController {
     private final JwtService jwtService;
     private final UserService userService;
     private final TokenUserResolver tokenUserResolver;
+    private final WeeklyPomodoroSummaryService weeklyPomodoroSummaryService;
 
     @GetMapping
     public ResponseEntity<List<PomodoroSessionDTO>> getAll() {
@@ -104,6 +112,22 @@ public class PomodoroSessionController {
     @GetMapping("/week")
     public ResponseEntity<List<WeeklyPomodoroDTO>> getWeekTotals() {
         return ResponseEntity.ok(service.getWeeklyTotals());
+    }
+
+    @PostMapping("/summary/test")
+    public ResponseEntity<String> triggerOwnWeeklySummary(
+            @RequestParam(required = false)
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+            LocalDate weekStart,
+            Authentication authentication
+    ) {
+        LocalDate effectiveWeekStart = resolveWeekStart(weekStart);
+
+        int sent = weeklyPomodoroSummaryService.sendWeeklySummaryForUser(authentication.getName(), effectiveWeekStart);
+        return ResponseEntity.ok("Ručno okinut tjedni Pomodoro sažetak za "
+                + authentication.getName() + " za tjedan od "
+                + effectiveWeekStart + " do " + weekEnd(effectiveWeekStart)
+                + ". Poslano: " + sent + ". Provjeri logove i inbox.");
     }
 
     public record PomodoroTokenRequest(

@@ -2,6 +2,7 @@ package hr.tvz.nppjj.studybuddy.config;
 
 import hr.tvz.nppjj.studybuddy.scheduler.ExamReminderJob;
 import hr.tvz.nppjj.studybuddy.scheduler.RevokedTokenCleanupJob;
+import hr.tvz.nppjj.studybuddy.scheduler.WeeklyPomodoroSummaryJob;
 import org.quartz.*;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -47,6 +48,25 @@ public class QuartzConfig {
                         .withIntervalInMinutes(15)
                         .repeatForever()
                         .withMisfireHandlingInstructionNextWithRemainingCount())
+                .build();
+    }
+
+    // --- WeeklyPomodoroSummaryJob (CRON) ---
+    @Bean
+    public JobDetail weeklyPomodoroSummaryJobDetail() {
+        return JobBuilder.newJob(WeeklyPomodoroSummaryJob.class)
+                .withIdentity("weeklyPomodoroSummaryJob")
+                .storeDurably()
+                .build();
+    }
+
+    @Bean
+    public Trigger weeklyPomodoroSummaryTrigger(JobDetail weeklyPomodoroSummaryJobDetail) {
+        return TriggerBuilder.newTrigger()
+                .forJob(weeklyPomodoroSummaryJobDetail)
+                .withIdentity("weeklyPomodoroSummaryTrigger")
+                .withSchedule(CronScheduleBuilder.cronSchedule("0 0 8 ? * MON")
+                        .withMisfireHandlingInstructionDoNothing())
                 .build();
     }
 }
