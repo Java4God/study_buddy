@@ -1,13 +1,14 @@
 package hr.tvz.nppjj.studybuddy.controller;
 
-import hr.tvz.nppjj.studybuddy.config.JwtService;
-import hr.tvz.nppjj.studybuddy.dto.UserDTO;
-import hr.tvz.nppjj.studybuddy.service.AllUsersService;
-import hr.tvz.nppjj.studybuddy.service.TokenBlacklistService;
-import hr.tvz.nppjj.studybuddy.service.UserService;
-import hr.tvz.nppjj.studybuddy.utils.TokenUserResolver;
+import java.util.List;
+import java.util.UUID;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 import org.quartz.JobKey;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
@@ -19,15 +20,18 @@ import org.springframework.http.MediaType;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
-
-import java.util.List;
-import java.util.UUID;
-
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+import hr.tvz.nppjj.studybuddy.config.JwtService;
+import hr.tvz.nppjj.studybuddy.dto.UserDTO;
+import hr.tvz.nppjj.studybuddy.service.AllUsersService;
+import hr.tvz.nppjj.studybuddy.service.TokenBlacklistService;
+import hr.tvz.nppjj.studybuddy.service.WeeklyPomodoroSummaryService;
+import hr.tvz.nppjj.studybuddy.utils.TokenUserResolver;
 
 @WebMvcTest(controllers = AdminController.class)
 @AutoConfigureMockMvc(addFilters = false)
@@ -47,6 +51,8 @@ class AdminControllerTest {
     TokenUserResolver tokenUserResolver;
     @MockitoBean
     private org.quartz.Scheduler scheduler;
+    @MockitoBean
+    WeeklyPomodoroSummaryService weeklyPomodoroSummaryService;
     private UserDTO userDTO;
 
     @BeforeEach

@@ -21,5 +21,6 @@ class QuartzRegistrationTest {
     void obaPoslaSuRegistrirana() throws SchedulerException {
         assertTrue(scheduler.checkExists(JobKey.jobKey("examReminderJob")));
         assertTrue(scheduler.checkExists(JobKey.jobKey("revokedTokenCleanupJob")));
+        assertTrue(scheduler.checkExists(JobKey.jobKey("weeklyPomodoroSummaryJob")));
     }
 }

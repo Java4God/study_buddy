@@ -1,14 +1,23 @@
 package hr.tvz.nppjj.studybuddy.service;
 
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDate;
-import java.time.LocalTime;
+import hr.tvz.nppjj.studybuddy.dto.DailyPomodoroSummaryDTO;
+import hr.tvz.nppjj.studybuddy.enumerators.PomodoroSummaryRating;
+import static hr.tvz.nppjj.studybuddy.utils.WeeklyPomodoroSummaryUtil.formatMinutes;
+import static hr.tvz.nppjj.studybuddy.utils.WeeklyPomodoroSummaryUtil.totalMinutes;
+import static hr.tvz.nppjj.studybuddy.utils.WeeklyPomodoroSummaryUtil.totalPomodoros;
+import static hr.tvz.nppjj.studybuddy.utils.WeeklyPomodoroSummaryUtil.weekdayMinutes;
+import static hr.tvz.nppjj.studybuddy.utils.WeeklyPomodoroSummaryUtil.weekdayPomodoros;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Service
 @RequiredArgsConstructor
@@ -42,10 +51,10 @@ public class EmailServiceImpl implements EmailService {
 
         try {
             mailSender.send(message);
-            log.info("Password reset email sent to {}", to);
+            log.info("Email za reset lozinke poslan na {}", to);
         } catch (Exception e) {
-            log.error("Failed to send password reset email to {}: {}", to, e.getMessage());
-            throw new RuntimeException("Failed to send email", e);
+            log.error("Slanje emaila za reset lozinke na {} nije uspjelo: {}", to, e.getMessage());
+            throw new RuntimeException("Slanje emaila nije uspjelo", e);
         }
     }
 
@@ -54,7 +63,7 @@ public class EmailServiceImpl implements EmailService {
         SimpleMailMessage message = new SimpleMailMessage();
         message.setFrom(fromAddress);
         message.setTo(to);
-        message.setSubject("StudyBuddy Podsjetnik za ispit: " + subjectName);
+        message.setSubject("StudyBuddy - Podsjetnik za ispit: " + subjectName);
         message.setText(
                 "Pozdrav,\n\n" +
                         "Podsjećamo te da imaš ispit za 3 dana:\n\n" +
@@ -68,9 +77,77 @@ public class EmailServiceImpl implements EmailService {
 
         try {
             mailSender.send(message);
-            log.info("Exam reminder email sent to {} for exam {}", to, subjectName);
+            log.info("Podsjetnik za ispit {} poslan na {}", subjectName, to);
         } catch (Exception e) {
-            log.error("Failed to send exam reminder email to {}: {}", to, e.getMessage());
+            log.error("Slanje podsjetnika za ispit na {} nije uspjelo: {}", to, e.getMessage());
+        }
+    }
+
+    @Override
+    public void sendWeeklyPomodoroSummaryEmail(String to, String username, LocalDate weekStart, LocalDate weekEnd,
+                                               List<DailyPomodoroSummaryDTO> dailySummaries,
+                                               PomodoroSummaryRating rating) {
+        int weeklyPomodoros = totalPomodoros(dailySummaries);
+        int weeklyMinutes = totalMinutes(dailySummaries);
+        int weekdayPomodoros = weekdayPomodoros(dailySummaries);
+        int weekdayMinutes = weekdayMinutes(dailySummaries);
+
+        StringBuilder body = new StringBuilder();
+        body.append("Pozdrav");
+        if (username != null && !username.isBlank()) {
+            body.append(" ").append(username);
+        }
+        body.append(",\n\n");
+        body.append("Tvoj tjedni Pomodoro sažetak za ")
+                .append(weekStart)
+                .append(" - ")
+                .append(weekEnd)
+                .append(":\n\n");
+
+        for (DailyPomodoroSummaryDTO summary : dailySummaries) {
+            body.append(summary.date())
+                    .append(": ")
+                    .append(summary.pomodoroCount())
+                    .append(" Pomodoro sesija, ")
+                    .append(formatMinutes(summary.totalMinutes()))
+                    .append("\n");
+        }
+
+        body.append("\nUkupno ovaj tjedan: ")
+                .append(weeklyPomodoros)
+                .append(" Pomodoro sesija, ")
+                .append(formatMinutes(weeklyMinutes))
+                .append("\n");
+        body.append("Osnovni cilj za najbolju ocjenu (5 dana): 30 Pomodoro sesija, 7 h 30 min\n");
+        body.append("Radnim danima: ")
+                .append(weekdayPomodoros)
+                .append(" Pomodoro sesija, ")
+                .append(formatMinutes(weekdayMinutes))
+                .append("\n");
+        body.append("Za ocjenu brojimo cijeli tjedan: ")
+                .append(weeklyPomodoros)
+                .append(" / 30 Pomodoro sesija, ")
+                .append(formatMinutes(weeklyMinutes))
+                .append(" / 7 h 30 min\n");
+        body.append("Ocjena: ")
+                .append(rating.getLabel())
+                .append(" - ")
+                .append(rating.getMessage())
+                .append("\n\n");
+        body.append("Vikend učenje ulazi u ocjenu, ali najbolja ocjena je postavljena prema cilju od 5 dana.\n\n");
+        body.append("Pozdrav,\nStudyBuddy tim");
+
+        SimpleMailMessage message = new SimpleMailMessage();
+        message.setFrom(fromAddress);
+        message.setTo(to);
+        message.setSubject("StudyBuddy - Tjedni Pomodoro sažetak");
+        message.setText(body.toString());
+
+        try {
+            mailSender.send(message);
+            log.info("Tjedni Pomodoro sažetak poslan na {}", to);
+        } catch (Exception e) {
+            log.error("Slanje tjednog Pomodoro sažetka na {} nije uspjelo: {}", to, e.getMessage());
         }
     }
 }
