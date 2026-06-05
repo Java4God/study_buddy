@@ -2,6 +2,7 @@
 
 import { useCallback, useState } from "react";
 import { sendAssistantMessage, AssistantApiError } from "../lib/assistantApi";
+import { sendAssistantFile } from "../lib/assistantFileApi";
 import { AssistantMessage } from "../types/assistant";
 
 function createMessage(role: AssistantMessage["role"], content: string) {
@@ -55,5 +56,50 @@ export function useAssistantConversation(initialMessages: AssistantMessage[]) {
     [draft, isSending, messages],
   );
 
-  return { messages, draft, setDraft, isSending, error, sendMessage };
+  const uploadFile = useCallback(
+    async (file: File | null) => {
+      if (!file || isSending) return;
+
+      const userMessage = createMessage(
+        "user",
+        `Generate practice questions from ${file.name}`,
+      );
+      const conversation = [...messages, userMessage];
+
+      setMessages(conversation);
+      setIsSending(true);
+      setError(null);
+
+      try {
+        const assistantMessage = await sendAssistantFile(
+          file,
+          conversation.map(({ role, content }) => ({ role, content })),
+        );
+        setMessages((current) => [...current, assistantMessage]);
+      } catch (caughtError) {
+        const message =
+          caughtError instanceof AssistantApiError
+            ? caughtError.message
+            : "The assistant API is unavailable right now.";
+        setError(message);
+        setMessages((current) => [
+          ...current,
+          createMessage("assistant", message),
+        ]);
+      } finally {
+        setIsSending(false);
+      }
+    },
+    [isSending, messages],
+  );
+
+  return {
+    messages,
+    draft,
+    setDraft,
+    isSending,
+    error,
+    sendMessage,
+    uploadFile,
+  };
 }
