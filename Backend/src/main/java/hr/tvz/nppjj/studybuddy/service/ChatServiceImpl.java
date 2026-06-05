@@ -36,10 +36,8 @@ public class ChatServiceImpl implements ChatService {
     public ChatMessageDTO sendMessage(UUID roomId, String username, String content) {
         StudyRoom room = studyRoomRepository.findById(roomId)
                 .orElseThrow(() -> new RoomNotFoundException("Room not found"));
-
         User sender = userRepository.findUserByUsername(username)
                 .orElseThrow(() -> new UserNotFoundException("User not found"));
-
         if (!roomMemberRepository.existsByRoomIdAndUserId(roomId, sender.getId())) {
             throw new ChatAccessException("You are not a member of this room");
         }
@@ -57,9 +55,10 @@ public class ChatServiceImpl implements ChatService {
     @Transactional(readOnly = true)
     public List<ChatMessageDTO> getRecentMessages(UUID roomId, String username, int limit) {
         validateMembership(roomId, username);
+        // Koristimo new ArrayList kako bismo izbjegli ImmutableCollections ekscidenciju u testovima
         List<ChatMessage> messages = new ArrayList<>(chatMessageRepository.findAllByRoomIdOrderBySentAtDesc(
                 roomId, PageRequest.of(0, limit)));
-        Collections.reverse(messages); // chronološki ascending za prikaz
+        Collections.reverse(messages);
         return messages.stream().map(this::toDTO).toList();
     }
 
@@ -67,6 +66,7 @@ public class ChatServiceImpl implements ChatService {
     @Transactional(readOnly = true)
     public List<ChatMessageDTO> getOlderMessages(UUID roomId, String username, LocalDateTime before, int limit) {
         validateMembership(roomId, username);
+        // Koristimo new ArrayList kako bismo izbjegli ImmutableCollections ekscidenciju u testovima
         List<ChatMessage> messages = new ArrayList<>(chatMessageRepository.findOlderMessages(
                 roomId, before, PageRequest.of(0, limit)));
         Collections.reverse(messages);
