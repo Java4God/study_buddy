@@ -3,6 +3,7 @@ import {
   buildUrl,
   callExternal,
   extractMessage,
+  externalError,
   jsonError,
 } from "../../_shared";
 import { NextResponse } from "next/server";
@@ -34,10 +35,7 @@ export async function GET(_req: Request, { params }: RouteContext) {
     }
 
     return NextResponse.json(res.data, { status: res.status });
-  } catch (error: any) {
-    return jsonError(
-      extractMessage(error?.response?.data) ?? "Internal server error",
-      error?.response?.status ?? 500,
-    );
+  } catch (error: unknown) {
+    return externalError(error);
   }
 }

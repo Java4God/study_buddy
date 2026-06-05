@@ -1,6 +1,12 @@
 import { NextResponse } from "next/server";
 import { getAuthorizedToken, refreshAccessToken } from "@/app/lib/auth";
-import { callExternal, buildUrl, jsonError, extractMessage } from "./_shared";
+import {
+  callExternal,
+  buildUrl,
+  jsonError,
+  extractMessage,
+  externalError,
+} from "./_shared";
 
 export async function GET() {
   let accessToken = await getAuthorizedToken();
@@ -22,11 +28,8 @@ export async function GET() {
     }
 
     return NextResponse.json(res.data, { status: res.status });
-  } catch (error: any) {
-    return jsonError(
-      extractMessage(error?.response?.data) ?? "Internal server error",
-      error?.response?.status ?? 500,
-    );
+  } catch (error: unknown) {
+    return externalError(error);
   }
 }
 
@@ -51,10 +54,7 @@ export async function POST(request: Request) {
     }
 
     return NextResponse.json(res.data, { status: res.status });
-  } catch (error: any) {
-    return jsonError(
-      extractMessage(error?.response?.data) ?? "Internal server error",
-      error?.response?.status ?? 500,
-    );
+  } catch (error: unknown) {
+    return externalError(error);
   }
 }

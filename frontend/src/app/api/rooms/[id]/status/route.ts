@@ -5,6 +5,7 @@ import {
   buildUrl,
   jsonError,
   extractMessage,
+  externalError,
 } from "../../_shared";
 
 export async function PUT(
@@ -14,12 +15,15 @@ export async function PUT(
   const { id } = await params;
   if (!id) return jsonError("Missing room id", 400);
 
-  const payload = await req.json();
-
   let accessToken = await getAuthorizedToken();
   if (!accessToken) return jsonError("Unauthorized", 401);
 
   try {
+    const payload = await req.json().catch(() => null);
+    if (!payload || typeof payload !== "object" || !("status" in payload)) {
+      return jsonError("Status is required", 400);
+    }
+
     const path = `${id}/status`;
     let res = await callExternal("put", buildUrl(path), payload, accessToken);
     if (res.status === 401 || res.status === 403) {
@@ -36,10 +40,7 @@ export async function PUT(
     }
 
     return NextResponse.json(res.data, { status: res.status });
-  } catch (error: any) {
-    return jsonError(
-      extractMessage(error?.response?.data) ?? "Internal server error",
-      error?.response?.status ?? 500,
-    );
+  } catch (error: unknown) {
+    return externalError(error);
   }
 }
