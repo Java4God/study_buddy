@@ -75,7 +75,9 @@ testWithExistingUser(
     await createRoom(page);
 
     await page.getByRole("button", { name: "On break" }).click();
-    await expect(page.getByText("On break")).toBeVisible();
+    await expect(
+      page.locator("span.text-xs.text-slate-500", { hasText: "On break" }),
+    ).toBeVisible();
 
     await deleteOpenRoom(page);
   },
