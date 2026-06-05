@@ -1,10 +1,9 @@
-package hr.tvz.nppjj.studybuddy.scheduler;
+package hr.tvz.nppjj.studybuddy.service;
 
 import hr.tvz.nppjj.studybuddy.enumerators.Role;
 import hr.tvz.nppjj.studybuddy.model.ExamSchedule;
 import hr.tvz.nppjj.studybuddy.model.User;
 import hr.tvz.nppjj.studybuddy.repository.ExamScheduleRepository;
-import hr.tvz.nppjj.studybuddy.service.EmailService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -26,8 +25,8 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-@DisplayName("ExamReminderScheduler - unit testovi")
-class ExamReminderSchedulerTest {
+@DisplayName("ExamReminderServiceImpl - unit testovi")
+class ExamReminderServiceImplTest {
 
     @Mock
     private ExamScheduleRepository examScheduleRepository;
@@ -36,7 +35,7 @@ class ExamReminderSchedulerTest {
     private EmailService emailService;
 
     @InjectMocks
-    private ExamReminderScheduler examReminderScheduler;
+    private ExamReminderServiceImpl examReminderService;
 
     private User userSEmailom;
 
@@ -50,24 +49,19 @@ class ExamReminderSchedulerTest {
     }
 
     @Test
-    @DisplayName("sendExamReminders ne šalje email kad nema ispita za zadani datum")
-    void sendExamReminders_kadNemaIspita_nePosaljeEmail() {
-        // given
+    @DisplayName("ne šalje email kad nema ispita za zadani datum")
+    void kadNemaIspita_nePosaljeEmail() {
         when(examScheduleRepository.findAllByExamDate(any(LocalDate.class)))
                 .thenReturn(Collections.emptyList());
 
-        // when
-        examReminderScheduler.sendExamReminders();
+        examReminderService.sendRemindersForExamsWithin(3);
 
-        // then
-        verify(emailService, never()).sendExamReminderEmail(
-                any(), any(), any(), any(), any());
+        verify(emailService, never()).sendExamReminderEmail(any(), any(), any(), any(), any());
     }
 
     @Test
-    @DisplayName("sendExamReminders šalje email kad ispit ima usera s emailom")
-    void sendExamReminders_kadIspitImaUseraSEmailom_saljeEmail() {
-        // given
+    @DisplayName("šalje email kad ispit ima usera s emailom")
+    void kadIspitImaUseraSEmailom_saljeEmail() {
         ExamSchedule exam = new ExamSchedule(
                 UUID.randomUUID(),
                 "Programiranje u Javi",
@@ -80,10 +74,8 @@ class ExamReminderSchedulerTest {
         when(examScheduleRepository.findAllByExamDate(any(LocalDate.class)))
                 .thenReturn(List.of(exam));
 
-        // when
-        examReminderScheduler.sendExamReminders();
+        examReminderService.sendRemindersForExamsWithin(3);
 
-        // then
         verify(emailService).sendExamReminderEmail(
                 eq("ana@tvz.hr"),
                 eq("Programiranje u Javi"),
@@ -94,9 +86,8 @@ class ExamReminderSchedulerTest {
     }
 
     @Test
-    @DisplayName("sendExamReminders preskače ispit kad user nema email")
-    void sendExamReminders_kadUserNemaEmail_preskaceIspit() {
-        // given
+    @DisplayName("preskače ispit kad user nema email")
+    void kadUserNemaEmail_preskaceIspit() {
         User userBezEmaila = new User();
         userBezEmaila.setId(UUID.randomUUID());
         userBezEmaila.setUsername("noemail");
@@ -104,46 +95,29 @@ class ExamReminderSchedulerTest {
         userBezEmaila.setRole(Role.ROLE_BASIC_USER);
 
         ExamSchedule exam = new ExamSchedule(
-                UUID.randomUUID(),
-                "Java",
-                LocalDate.now().plusDays(3),
-                LocalTime.of(10, 0),
-                "Dvorana",
-                "Note",
-                userBezEmaila
+                UUID.randomUUID(), "Java", LocalDate.now().plusDays(3),
+                LocalTime.of(10, 0), "Dvorana", "Note", userBezEmaila
         );
         when(examScheduleRepository.findAllByExamDate(any(LocalDate.class)))
                 .thenReturn(List.of(exam));
 
-        // when
-        examReminderScheduler.sendExamReminders();
+        examReminderService.sendRemindersForExamsWithin(3);
 
-        // then
-        verify(emailService, never()).sendExamReminderEmail(
-                any(), any(), any(), any(), any());
+        verify(emailService, never()).sendExamReminderEmail(any(), any(), any(), any(), any());
     }
 
     @Test
-    @DisplayName("sendExamReminders preskače ispit kad user je null")
-    void sendExamReminders_kadUserJeNull_preskaceIspit() {
-        // given
+    @DisplayName("preskače ispit kad user je null")
+    void kadUserJeNull_preskaceIspit() {
         ExamSchedule exam = new ExamSchedule(
-                UUID.randomUUID(),
-                "Java",
-                LocalDate.now().plusDays(3),
-                LocalTime.of(10, 0),
-                "Dvorana",
-                "Note",
-                null
+                UUID.randomUUID(), "Java", LocalDate.now().plusDays(3),
+                LocalTime.of(10, 0), "Dvorana", "Note", null
         );
         when(examScheduleRepository.findAllByExamDate(any(LocalDate.class)))
                 .thenReturn(List.of(exam));
 
-        // when
-        examReminderScheduler.sendExamReminders();
+        examReminderService.sendRemindersForExamsWithin(3);
 
-        // then
-        verify(emailService, never()).sendExamReminderEmail(
-                any(), any(), any(), any(), any());
+        verify(emailService, never()).sendExamReminderEmail(any(), any(), any(), any(), any());
     }
 }

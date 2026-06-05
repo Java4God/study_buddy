@@ -57,4 +57,10 @@ public class TokenBlacklistService {
             throw new RuntimeException("Hashing failed", e);
         }
     }
+
+    @Transactional
+    public int purgeExpired() {
+        long deleted = repository.deleteByExpiresAtBefore(LocalDateTime.now());
+        return (int) deleted;
+    }
 }
