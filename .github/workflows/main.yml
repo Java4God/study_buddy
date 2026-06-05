@@ -181,3 +181,8 @@ jobs:
           name: backend-log
           path: /tmp/backend.log
           retention-days: 30
+
+      - name: 'Notify vercel'
+        uses: 'vercel/repository-dispatch/actions/status@v1'
+        with:
+          name: Vercel - study-buddy: lint
