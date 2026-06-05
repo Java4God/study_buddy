@@ -4,8 +4,10 @@ import java.util.Optional;
 import java.util.UUID;
 
 import hr.tvz.nppjj.studybuddy.requests.UpdateUserRequest;
+import hr.tvz.nppjj.studybuddy.service.AllUsersService;
 import hr.tvz.nppjj.studybuddy.service.TokenBlacklistService;
 import hr.tvz.nppjj.studybuddy.utils.TokenUserResolver;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -28,6 +30,7 @@ import lombok.AllArgsConstructor;
 @CrossOrigin(origins = "http://localhost:3000")
 public class UserController {
     UserService userService;
+
     private final TokenUserResolver tokenUserResolver;
     private final TokenBlacklistService tokenBlacklistService;
 

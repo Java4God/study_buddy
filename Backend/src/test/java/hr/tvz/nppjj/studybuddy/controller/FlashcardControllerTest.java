@@ -45,7 +45,7 @@ class FlashcardControllerTest {
     UserDetailsService userDetailsService;
 
 
-    @MockitoBean
+    @MockitoBean(name = "db")
     private FlashcardService flashcardService;
 
     private UUID flashcardId;

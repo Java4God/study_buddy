@@ -1,6 +1,7 @@
 package hr.tvz.nppjj.studybuddy.controller;
 
 import hr.tvz.nppjj.studybuddy.dto.UserDTO;
+import hr.tvz.nppjj.studybuddy.service.AllUsersService;
 import hr.tvz.nppjj.studybuddy.service.UserService;
 import lombok.AllArgsConstructor;
 import org.quartz.JobKey;
@@ -10,12 +11,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/admin")
@@ -23,8 +19,8 @@ import org.springframework.web.bind.annotation.RestController;
 @CrossOrigin(origins = "http://localhost:3000")
 @PreAuthorize("hasRole('ADMIN')")
 public class AdminController {
+    private AllUsersService userService;
 
-    private final UserService userService;
     private final Scheduler scheduler;
 
     @GetMapping("/users")

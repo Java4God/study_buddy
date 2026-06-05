@@ -4,12 +4,14 @@ import hr.tvz.nppjj.studybuddy.dto.FlashcardDTO;
 import hr.tvz.nppjj.studybuddy.model.Flashcard;
 import hr.tvz.nppjj.studybuddy.repository.FlashcardRepository;
 import lombok.AllArgsConstructor;
+import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+@Component("db")
 @Service
 @AllArgsConstructor
 public class FlashcardServiceImpl implements FlashcardService{

@@ -10,6 +10,7 @@ import hr.tvz.nppjj.studybuddy.repository.UserRepository;
 import hr.tvz.nppjj.studybuddy.requests.UpdateUserRequest;
 import hr.tvz.nppjj.studybuddy.requests.UserAuthRequest;
 import hr.tvz.nppjj.studybuddy.responses.UserAuthResponse;
+import hr.tvz.nppjj.studybuddy.utils.UserDTOUtil;
 import lombok.AllArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -20,11 +21,15 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
+
+import static hr.tvz.nppjj.studybuddy.utils.UserDTOUtil.toDTO;
 
 @Service
 @AllArgsConstructor
@@ -60,7 +65,7 @@ public class UserServiceImpl implements UserService{
 
     @Override
     public Page<UserDTO> getUsers(Pageable pageable) {
-        return userRepository.findAll(pageable).map(this::toDTO);
+        return userRepository.findAll(pageable).map(UserDTOUtil::toDTO);
     }
 
     @Override
@@ -93,7 +98,7 @@ public class UserServiceImpl implements UserService{
     @Override
     @Transactional
     public Optional<UserDTO> updateUser(UUID uuid, UpdateUserRequest request) {
-        String currentUsername = SecurityContextHolder.getContext().getAuthentication().getName();
+        String currentUsername = Objects.requireNonNull(SecurityContextHolder.getContext().getAuthentication()).getName();
         User currentUser = userRepository.findUserByUsername(currentUsername)
                 .orElseThrow(() -> new UserNotFoundException("Current user not found"));
         boolean isAdmin = currentUser.getRole() != null
@@ -112,7 +117,7 @@ public class UserServiceImpl implements UserService{
                     }
                     return userRepository.save(u);
                 })
-                .map(this::toDTO);
+                .map(UserDTOUtil::toDTO);
     }
 
     @Override
@@ -136,11 +141,5 @@ public class UserServiceImpl implements UserService{
         return null;
     }
 
-    private UserDTO toDTO(User user){
-        return new UserDTO(
-                user.getId(),
-                user.getUsername(),
-                user.getEmail()
-        );
-    }
+
 }
