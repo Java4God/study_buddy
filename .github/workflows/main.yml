@@ -1,5 +1,9 @@
 name: Full Stack Tests with Coverage
 
+permissions:
+  contents: read
+  statuses: write
+
 on:
   push:
     branches: [main, master]
