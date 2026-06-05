@@ -8,6 +8,7 @@ import hr.tvz.nppjj.studybuddy.enumerators.PomodoroMode;
 import hr.tvz.nppjj.studybuddy.exception.PomodoroSessionNotFoundException;
 import hr.tvz.nppjj.studybuddy.service.PomodoroSessionService;
 import hr.tvz.nppjj.studybuddy.service.UserService;
+import hr.tvz.nppjj.studybuddy.service.WeeklyPomodoroSummaryService;
 import hr.tvz.nppjj.studybuddy.utils.TokenUserResolver;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -64,6 +65,9 @@ class PomodoroSessionControllerTest {
 
     @MockitoBean
     private TokenUserResolver tokenUserResolver;
+
+    @MockitoBean
+    private WeeklyPomodoroSummaryService weeklyPomodoroSummaryService;
 
     private ObjectMapper objectMapper;
     private UUID sessionId;

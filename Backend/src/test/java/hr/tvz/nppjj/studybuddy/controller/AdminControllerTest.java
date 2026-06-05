@@ -5,6 +5,7 @@ import hr.tvz.nppjj.studybuddy.dto.UserDTO;
 import hr.tvz.nppjj.studybuddy.service.AllUsersService;
 import hr.tvz.nppjj.studybuddy.service.TokenBlacklistService;
 import hr.tvz.nppjj.studybuddy.service.UserService;
+import hr.tvz.nppjj.studybuddy.service.WeeklyPomodoroSummaryService;
 import hr.tvz.nppjj.studybuddy.utils.TokenUserResolver;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -45,6 +46,8 @@ class AdminControllerTest {
     TokenUserResolver tokenUserResolver;
     @MockitoBean
     private org.quartz.Scheduler scheduler;
+    @MockitoBean
+    WeeklyPomodoroSummaryService weeklyPomodoroSummaryService;
     private UserDTO userDTO;
 
     @BeforeEach
