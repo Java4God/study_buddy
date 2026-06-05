@@ -24,7 +24,6 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -56,10 +55,7 @@ class UserServiceImplTest {
     AuthenticationManager authenticationManager;
     @Mock
     private TokenBlacklistService tokenBlacklistService;
-    @Mock
-    private SecurityContext securityContext;
-    @Mock
-    private Authentication authentication;
+
     private final BCryptPasswordEncoder encoder = new BCryptPasswordEncoder(12);
 
     UUID userId;
@@ -238,45 +234,6 @@ class UserServiceImplTest {
         verify(userRepository).save(targetUser);
     }
 
-/*    @Test
-    void updateUser_returnsEmpty_whenCurrentUserNotFound() {
-        UUID targetId = userId;
-        UpdateUserRequest request = new UpdateUserRequest("newuser", "new@test.com");
-
-        SecurityContext securityContext = mock(SecurityContext.class);
-        Authentication authentication = mock(Authentication.class);
-
-        when(securityContext.getAuthentication()).thenReturn(authentication);
-        when(authentication.getName()).thenReturn("newuser");
-
-        SecurityContextHolder.setContext(securityContext);
-        when(userRepository.findUserByUsername("newuser")).thenReturn(Optional.empty());
-
-        Optional<UserDTO> result = userService.updateUser(targetId, request);
-
-        assertThat(result).isEmpty();
-        verify(userRepository).findUserByUsername(user.getUsername());
-        verify(userRepository, never()).findUserById(any(UUID.class));
-        verify(userRepository, never()).save(any(User.class));
-    }*/
-
-/*    @Test
-    void updateUser_returnsEmpty_whenTargetUserNotFound() {
-        UUID targetId = OTHER_USER_ID;
-        UpdateUserRequest request = new UpdateUserRequest("newuser", "new@test.com");
-
-        Role role = Role.ROLE_BASIC_USER;
-        setAuthenticatedUser(user.getUsername(), role);
-
-        when(userRepository.findUserById(targetId)).thenReturn(Optional.empty());
-
-        Optional<UserDTO> result = userService.updateUser(targetId, request);
-
-        assertThat(result).isEmpty();
-        verify(userRepository).findUserByUsername(user.getUsername());
-        verify(userRepository).findUserById(targetId);
-        verify(userRepository, never()).save(any(User.class));
-    }*/
 
     @Test
     void updateUser_onlyUpdatesProvidedFields_nullAndBlankFieldsIgnored() {

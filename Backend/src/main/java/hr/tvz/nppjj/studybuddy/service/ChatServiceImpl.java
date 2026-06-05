@@ -94,4 +94,10 @@ public class ChatServiceImpl implements ChatService {
                 m.getSentAt()
         );
     }
+
+    @Transactional
+    public int purgeMessagesOlderThanDays(int days) {
+        LocalDateTime cutoff = LocalDateTime.now().minusDays(days);
+        return chatMessageRepository.deleteAllOlderThan(cutoff);
+    }
 }
