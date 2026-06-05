@@ -75,6 +75,7 @@ export default function RoomPage({ params }: RoomPageProps) {
               isMember={detail.isMember}
               loading={chat.loadingMessages}
               sending={chat.sending}
+              connected={chat.connected}
               error={chat.chatError}
               onDraftChange={chat.setDraft}
               onSend={chat.sendMessage}

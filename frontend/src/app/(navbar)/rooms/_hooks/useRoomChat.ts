@@ -17,6 +17,7 @@ export function useRoomChat(roomId: string, enabled: boolean) {
   const [loadingMessages, setLoadingMessages] = useState(false);
   const [sending, setSending] = useState(false);
   const [chatError, setChatError] = useState("");
+  const [connected, setConnected] = useState(false);
 
   const loadMessages = useCallback(async () => {
     if (!enabled) return;
@@ -41,7 +42,10 @@ export function useRoomChat(roomId: string, enabled: boolean) {
 
   useEffect(() => {
     if (!enabled) {
-      queueMicrotask(() => setMessages([]));
+      queueMicrotask(() => {
+        setMessages([]);
+        setConnected(false);
+      });
       return;
     }
     let cancelled = false;
@@ -59,14 +63,19 @@ export function useRoomChat(roomId: string, enabled: boolean) {
           connectHeaders: { Authorization: `Bearer ${accessToken}` },
           reconnectDelay: 5000,
           onConnect: () => {
+            setConnected(true);
             client.subscribe(`/topic/chat/${roomId}`, (frame: IMessage) => {
               setMessages((prev) =>
                 appendUnique(prev, mapChatMessage(JSON.parse(frame.body))),
               );
             });
           },
+          onDisconnect: () => setConnected(false),
           onStompError: () => setChatError("Chat connection failed."),
-          onWebSocketError: () => setChatError("Chat connection failed."),
+          onWebSocketError: () => {
+            setConnected(false);
+            setChatError("Chat connection failed.");
+          },
         });
         clientRef.current = client;
         client.activate();
@@ -75,6 +84,7 @@ export function useRoomChat(roomId: string, enabled: boolean) {
 
     return () => {
       cancelled = true;
+      setConnected(false);
       clientRef.current?.deactivate();
       clientRef.current = null;
     };
@@ -105,6 +115,7 @@ export function useRoomChat(roomId: string, enabled: boolean) {
     loadingMessages,
     sending,
     chatError,
+    connected,
     sendMessage,
   };
 }

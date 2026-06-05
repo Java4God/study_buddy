@@ -10,6 +10,7 @@ type Props = {
   isMember: boolean;
   loading: boolean;
   sending: boolean;
+  connected: boolean;
   error: string;
   onDraftChange: (value: string) => void;
   onSend: () => void;
@@ -22,6 +23,7 @@ export default function MessagesPanel({
   isMember,
   loading,
   sending,
+  connected,
   error,
   onDraftChange,
   onSend,
@@ -65,14 +67,20 @@ export default function MessagesPanel({
           }}
         >
           <textarea
+            data-testid="room-chat-input"
             className="min-h-24 flex-1 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-indigo-400"
             value={draft}
-            disabled={!isMember || sending}
+            disabled={!isMember || sending || !connected}
             maxLength={2000}
-            placeholder={isMember ? "Write a message..." : "Join to chat"}
+            placeholder={
+              isMember && connected ? "Write a message..." : "Join to chat"
+            }
             onChange={(event) => onDraftChange(event.target.value)}
           />
-          <Button type="submit" disabled={!isMember || sending || !draft.trim()}>
+          <Button
+            type="submit"
+            disabled={!isMember || sending || !connected || !draft.trim()}
+          >
             <Send className="size-4" />
             Send
           </Button>
