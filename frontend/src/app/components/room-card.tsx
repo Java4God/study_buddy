@@ -5,19 +5,23 @@ import { Room } from "../(navbar)/rooms/_shared";
 
 type Props = {
   room: Room;
-  currentUsername: string | null;
-  onPrimaryAction: (room: Room) => void;
+  isOwner: boolean;
+  isMember: boolean;
+  onEnter: (room: Room) => void;
+  onJoin: (room: Room) => void;
   onDelete: (room: Room) => void;
 };
 
 export default function RoomCard({
   room,
-  currentUsername,
-  onPrimaryAction,
+  isOwner,
+  isMember,
+  onEnter,
+  onJoin,
   onDelete,
 }: Props) {
-  const isOwner =
-    Boolean(currentUsername) && room.ownerUsername === currentUsername;
+  const primaryLabel = isOwner || isMember ? "Enter Room" : "Join Room";
+  const primaryAction = isOwner || isMember ? onEnter : onJoin;
 
   return (
     <Card className="group rounded-2xl border border-slate-200 bg-white/90 shadow-sm backdrop-blur transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg w-sm">
@@ -52,8 +56,8 @@ export default function RoomCard({
             Owner: {room.ownerUsername || "Unknown"}
           </div>
           <div className="flex gap-2">
-            <Button className="flex-1" onClick={() => onPrimaryAction(room)}>
-              {isOwner ? "Open Room" : "Join Room"}
+            <Button className="flex-1" onClick={() => primaryAction(room)}>
+              {isOwner ? "Open Room" : primaryLabel}
             </Button>
             {isOwner && (
               <Button

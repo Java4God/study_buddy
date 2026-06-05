@@ -5,6 +5,7 @@ import {
   buildUrl,
   jsonError,
   extractMessage,
+  externalError,
 } from "../../../rooms/_shared";
 
 export async function GET(
@@ -34,10 +35,7 @@ export async function GET(
     }
 
     return NextResponse.json(res.data, { status: res.status });
-  } catch (error: any) {
-    return jsonError(
-      extractMessage(error?.response?.data) ?? "Internal server error",
-      error?.response?.status ?? 500,
-    );
+  } catch (error: unknown) {
+    return externalError(error);
   }
 }

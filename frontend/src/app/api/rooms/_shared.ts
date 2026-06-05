@@ -17,6 +17,15 @@ function extractMessage(data: unknown): string | undefined {
   return undefined;
 }
 
+function externalError(error: unknown) {
+  const response = (error as { response?: { data?: unknown; status?: number } })
+    .response;
+  return jsonError(
+    extractMessage(response?.data) ?? "Internal server error",
+    response?.status ?? 500,
+  );
+}
+
 function buildUrl(path = "") {
   const suffix = path ? `/${path}` : "";
   return `${API_DOMAIN}${ROOMS}${suffix}`;
@@ -55,4 +64,4 @@ async function callExternal(
   throw new Error("Unsupported method");
 }
 
-export { jsonError, extractMessage, buildUrl, callExternal };
+export { jsonError, extractMessage, externalError, buildUrl, callExternal };

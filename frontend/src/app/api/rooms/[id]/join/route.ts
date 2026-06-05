@@ -5,6 +5,7 @@ import {
   buildUrl,
   jsonError,
   extractMessage,
+  externalError,
 } from "../../_shared";
 
 export async function POST(
@@ -12,7 +13,6 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> },
 ) {
   const { id } = await params;
-  console.log("Joining room with id:", id);
   if (!id) return jsonError("Missing room id", 400);
 
   let accessToken = await getAuthorizedToken();
@@ -40,10 +40,7 @@ export async function POST(
     }
 
     return NextResponse.json(res.data, { status: res.status });
-  } catch (error: any) {
-    return jsonError(
-      extractMessage(error?.response?.data) ?? "Internal server error",
-      error?.response?.status ?? 500,
-    );
+  } catch (error: unknown) {
+    return externalError(error);
   }
 }

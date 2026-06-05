@@ -1,6 +1,12 @@
 import { NextResponse } from "next/server";
 import { getAuthorizedToken, refreshAccessToken } from "@/app/lib/auth";
-import { callExternal, buildUrl, jsonError, extractMessage } from "../_shared";
+import {
+  callExternal,
+  buildUrl,
+  jsonError,
+  extractMessage,
+  externalError,
+} from "../_shared";
 
 export async function GET(
   _req: Request,
@@ -26,11 +32,8 @@ export async function GET(
     }
 
     return NextResponse.json(res.data, { status: res.status });
-  } catch (error: any) {
-    return jsonError(
-      extractMessage(error?.response?.data) ?? "Internal server error",
-      error?.response?.status ?? 500,
-    );
+  } catch (error: unknown) {
+    return externalError(error);
   }
 }
 
@@ -69,10 +72,7 @@ export async function DELETE(
 
     if (res.status === 204) return new NextResponse(null, { status: 204 });
     return NextResponse.json(res.data, { status: res.status });
-  } catch (error: any) {
-    return jsonError(
-      extractMessage(error?.response?.data) ?? "Internal server error",
-      error?.response?.status ?? 500,
-    );
+  } catch (error: unknown) {
+    return externalError(error);
   }
 }
